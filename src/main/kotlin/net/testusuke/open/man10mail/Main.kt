@@ -17,6 +17,10 @@ class Main:JavaPlugin() {
         plugin = this
         //  Logger
 
+        //  Command
+        getCommand("mmail")?.setExecutor(MailCommand)
+        //  Event
+        server.pluginManager.registerEvents(EventListener,this)
     }
 
     override fun onDisable() {
