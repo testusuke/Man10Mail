@@ -1,0 +1,40 @@
+plugins {
+    id 'org.jetbrains.kotlin.jvm' version '1.3.72'
+    id "net.minecrell.plugin-yml.bukkit" version "0.3.0"
+}
+
+group 'net.testusuke'
+version '0.0-dev'
+
+repositories {
+    mavenCentral()
+    maven {
+        url = "https://papermc.io/repo/repository/maven-public/"
+    }
+}
+
+dependencies {
+    implementation("com.destroystokyo.paper:paper-api:1.15.2-R0.1-SNAPSHOT")
+    compile("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
+}
+
+compileKotlin {
+    kotlinOptions.jvmTarget = "1.8"
+}
+
+bukkit {
+    name = project.name
+    version = project.version.toString()
+    main = group.toString() + ".open.man10mail.Main"
+    author = "testusuke"
+    apiVersion = "1.15"
+    commands {
+        register("mmail"){
+            description("general command")
+        }
+    }
+}
+
+jar {
+    from configurations.compile.collect { it.isDirectory() ? it : zipTree(it) }
+}
