@@ -1,5 +1,6 @@
 package net.testusuke.open.man10mail
 
+import net.testusuke.open.man10mail.DataBase.DataBase
 import org.bukkit.plugin.java.JavaPlugin
 
 /**
@@ -10,6 +11,8 @@ class Main:JavaPlugin() {
 
     companion object{
         lateinit var plugin: Main
+        lateinit var dataBase:DataBase
+        var prefix = "§e[§dMan10§aMail§e]§f"
     }
 
     override fun onEnable() {
@@ -17,6 +20,10 @@ class Main:JavaPlugin() {
         plugin = this
         //  Logger
 
+        //  Config
+        this.saveDefaultConfig()
+        //  DB
+        dataBase = DataBase(prefix)
         //  Command
         getCommand("mmail")?.setExecutor(MailCommand)
         //  Event
