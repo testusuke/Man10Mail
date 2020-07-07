@@ -1,6 +1,8 @@
 package net.testusuke.open.man10mail
 
+import org.bukkit.event.EventHandler
 import org.bukkit.event.Listener
+import org.bukkit.event.inventory.InventoryClickEvent
 
 /**
  * Created by testusuke on 2020/07/04
@@ -8,4 +10,11 @@ import org.bukkit.event.Listener
  */
 object EventListener:Listener {
 
+    //  InventoryClick
+    @EventHandler
+    fun onInventoryClick(event:InventoryClickEvent){
+        val player = event.whoClicked
+        val inv = event.inventory
+
+    }
 }
