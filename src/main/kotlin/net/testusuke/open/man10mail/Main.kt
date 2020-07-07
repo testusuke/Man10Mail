@@ -12,10 +12,10 @@ class Main:JavaPlugin() {
 
     companion object{
         lateinit var plugin: Main
+        //  Enable
+        var enable = false
         var prefix = "§e[§dMan10§aMail§e]§f"
     }
-    //  Enable
-    var enable = false
 
     //  DB
     lateinit var dataBase:DataBase
@@ -33,6 +33,8 @@ class Main:JavaPlugin() {
         getCommand("mmail")?.setExecutor(MailCommand)
         //  Event
         server.pluginManager.registerEvents(EventListener,this)
+        //  NoticeData
+        MailNoticeSetting.loadList()
 
         //  Prefix
         try {
@@ -44,6 +46,9 @@ class Main:JavaPlugin() {
     }
 
     override fun onDisable() {
+
+        //  save
+        MailNoticeSetting.saveList()
 
         //  enable
         config.set("enable",enable)
