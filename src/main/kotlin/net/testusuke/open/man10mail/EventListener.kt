@@ -15,6 +15,9 @@ object EventListener:Listener {
     fun onInventoryClick(event:InventoryClickEvent){
         val player = event.whoClicked
         val inv = event.inventory
+        val title = event.view.title
+        if(title == MailBox.INVENTORY_TITLE){
 
+        }
     }
 }

@@ -33,7 +33,13 @@ object MailNoticeSetting {
     fun enableNotice(player: Player){
         noticeList.add(player.uniqueId.toString())
     }
+    fun disableNotice(player:Player){
+        noticeList.remove(player.uniqueId.toString())
+    }
     fun isEnableNotice(player: Player):Boolean{
         return noticeList.contains(player.uniqueId.toString())
+    }
+    fun clear(){
+        noticeList.clear()
     }
 }
