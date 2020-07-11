@@ -1,7 +1,9 @@
 package net.testusuke.open.man10mail.DataBase
 
-import net.testusuke.open.man10mail.*
+import net.testusuke.open.man10mail.MailUtil
 import net.testusuke.open.man10mail.Main.Companion.plugin
+import net.testusuke.open.man10mail.Main.Companion.prefix
+import org.bukkit.Bukkit
 import java.sql.Statement
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
@@ -22,11 +24,11 @@ object MailConsole {
      * @param senderType[MailSenderType] uuid/mcid=PLAYER server=SERVER custom sender=CUSTOM(先頭に[#]が代入される。)
      * @return mailResult[MailResult<V>]
      */
-    fun sendMail(from:String,to:String,title:String,tag:String,message:String,senderType:MailSenderType):MailResult{
+    fun sendMail(from:String,to:String,title:String,tag:String,message:String,senderType: MailSenderType): MailResult {
         val current = LocalDateTime.now()
         val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
         val formatted = current.format(formatter)
-        val sql = "INSERT INTO mail_list (to_player,from_player,title,message,tag,date) VALUES('${to}','%from%','${title}','${message}','${tag}','${formatted}');"
+        val sql = "INSERT INTO mail_list (to_player,from_player,title,message,tag,date) VALUES('${to}','%from%','${title}','${message}','${MailUtil.convertTag(tag)}','${formatted}');"
         plugin.dataBase.open()
         val connection = plugin.dataBase.connection
         if(connection == null){
@@ -40,6 +42,9 @@ object MailConsole {
         if(resultSet.next()){
             id = resultSet.getInt("id")
         }
+        //  サーバー内にユーザーがいる場合は通知
+        Bukkit.getPlayer(to)?.sendMessage("${prefix}§6新しいメールが届いています。")
+
         return MailResult.Success(id)
     }
 
@@ -50,11 +55,11 @@ object MailConsole {
      * @param tag[String] タグ
      * @param message[String] メッセージ [;]で改行
      */
-    fun issueEveryoneMail(from:String,title:String,tag:String,message:String,senderType: MailSenderType):MailResult{
+    fun issueEveryoneMail(from:String,title:String,tag:String,message:String,senderType: MailSenderType): MailResult {
         val current = LocalDateTime.now()
         val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
         val formatted = current.format(formatter)
-        val sql = "INSERT INTO mail_all (from_player,title,message,tag,`date`) VALUES('%from%','${title}','${message}','${tag}','${formatted}');"
+        val sql = "INSERT INTO mail_all (from_player,title,message,tag,`date`) VALUES('%from%','${title}','${message}','${MailUtil.convertTag(tag)}','${formatted}');"
         plugin.dataBase.open()
         val connection = plugin.dataBase.connection
         if(connection == null){
@@ -68,6 +73,17 @@ object MailConsole {
         if(resultSet.next()){
             id = resultSet.getInt("id")
         }
+        //  close
+        resultSet.close()
+        statement.close()
+
+        //  サバ内のプレイヤーに通知
+        for(player in Bukkit.getOnlinePlayers()){
+            val uuid = player.uniqueId.toString()
+            sendEveryoneMail(uuid)
+            player.sendMessage("${prefix}§6新しいメールが届いています。")
+        }
+
         return MailResult.Success(id)
     }
 
@@ -76,7 +92,7 @@ object MailConsole {
      * @param uuid[String] ターゲット uuid
      * @return amount[Int] 読み込んだカラム数
      */
-    fun sendEveryoneMail(uuid:String):MailResult{
+    fun sendEveryoneMail(uuid:String): MailResult {
         plugin.dataBase.open()
         val connection = plugin.dataBase.connection
         if(connection == null){
@@ -111,11 +127,13 @@ object MailConsole {
                 val tag = selectAllResult.getString("tag")
                 val message = selectAllResult.getString("message")
                 val date = selectAllResult.getString("date")
-                val insertMailSQL = "INSERT INTO mail_list (to_player,from_player,title,message,tag,date) VALUES('${uuid}','${from}','${title}','${message}','${tag}','${date}');"
+                val insertMailSQL = "INSERT INTO mail_list (to_player,from_player,title,message,tag,date) VALUES('${uuid}','${from}','${title}','${message}','${MailUtil.convertTag(tag)}','${date}');"
                 insertMailStatement.executeUpdate(insertMailSQL)
                 amount++
             }
         }
+        selectAllResult.close()
+        selectAllStatement.close()
         insertMailStatement.close()
 
         return MailResult.Success(amount)
@@ -135,10 +153,5 @@ object MailConsole {
         }
         return sql
     }
-
-    /*
-    オートインクリースIDの取得方法
-    https://stackoverflow.com/questions/1376218/is-there-a-way-to-retrieve-the-autoincrement-id-from-a-prepared-statement
-     */
 
 }

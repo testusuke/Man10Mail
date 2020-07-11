@@ -1,4 +1,4 @@
-package net.testusuke.open.man10mail
+package net.testusuke.open.man10mail.DataBase
 
 /**
  * Created by testusuke on 2020/07/11

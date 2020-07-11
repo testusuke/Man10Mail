@@ -1,6 +1,6 @@
 package net.testusuke.open.man10mail
 
-import net.testusuke.open.man10mail.DataBase.MailConsole
+import net.testusuke.open.man10mail.DataBase.MailBox
 import net.testusuke.open.man10mail.Main.Companion.enable
 import net.testusuke.open.man10mail.Main.Companion.prefix
 import org.bukkit.ChatColor
