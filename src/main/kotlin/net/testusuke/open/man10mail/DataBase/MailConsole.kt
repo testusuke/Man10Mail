@@ -15,7 +15,7 @@ object MailConsole {
     /**
      * function of send mail.
      * @param from[String] 発信元(uuid or name)
-     * @param to[String] 送信先(uuid or mcid)
+     * @param to[String] 送信先(uuid)
      * @param title[String] タイトル
      * @param tag[String] タグ
      * @param message[String] メッセージ [;]で改行
@@ -50,7 +50,7 @@ object MailConsole {
      * @param tag[String] タグ
      * @param message[String] メッセージ [;]で改行
      */
-    fun sendEveryoneMail(from:String,title:String,tag:String,message:String,senderType: MailSenderType):MailResult{
+    fun issueEveryoneMail(from:String,title:String,tag:String,message:String,senderType: MailSenderType):MailResult{
         val current = LocalDateTime.now()
         val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
         val formatted = current.format(formatter)
@@ -69,6 +69,56 @@ object MailConsole {
             id = resultSet.getInt("id")
         }
         return MailResult.Success(id)
+    }
+
+    /**
+     * function of send mail in 'mail_all' table to 'mail_list'
+     * @param uuid[String] ターゲット uuid
+     * @return amount[Int] 読み込んだカラム数
+     */
+    fun sendEveryoneMail(uuid:String):MailResult{
+        plugin.dataBase.open()
+        val connection = plugin.dataBase.connection
+        if(connection == null){
+            plugin.dataBase.sendErrorMessage()
+            return MailResult.Error(MailErrorReason.CAN_NOT_ACCESS_DB)
+        }
+        val selectReadSQL = "SELECT from_mail_id FROM mail_read WHERE to_player='${uuid}';"
+        val selectReadStatement = connection.createStatement()
+        val selectReadResult = selectReadStatement.executeQuery(selectReadSQL)
+        if(!selectReadResult.next())return MailResult.Success(0)    //  none result
+        //  送信済みのMail ID
+        val readMailList = mutableListOf<Int>()
+        while (selectReadResult.next()){
+            readMailList.add(selectReadResult.getInt("from_mail_id"))
+        }
+        //  close
+        selectReadResult.close()
+        selectReadStatement.close()
+
+        //  Mail All Table
+        val selectAllSQL = "SELECT * FROM mail_all;"
+        val selectAllStatement = connection.createStatement()
+        val selectAllResult = selectAllStatement.executeQuery(selectAllSQL)
+        if(!selectAllResult.next())return MailResult.Success(0) //  none result
+        //  create statement
+        val insertMailStatement = connection.createStatement()
+        var amount = 0
+        while (selectAllResult.next()){
+            if(!readMailList.contains(selectAllResult.getInt("id"))){
+                val from = selectAllResult.getString("from_player")
+                val title = selectAllResult.getString("title")
+                val tag = selectAllResult.getString("tag")
+                val message = selectAllResult.getString("message")
+                val date = selectAllResult.getString("date")
+                val insertMailSQL = "INSERT INTO mail_list (to_player,from_player,title,message,tag,date) VALUES('${uuid}','${from}','${title}','${message}','${tag}','${date}');"
+                insertMailStatement.executeUpdate(insertMailSQL)
+                amount++
+            }
+        }
+        insertMailStatement.close()
+
+        return MailResult.Success(amount)
     }
 
     private fun replaceSQL(sql:String,from: String,senderType: MailSenderType):String{
