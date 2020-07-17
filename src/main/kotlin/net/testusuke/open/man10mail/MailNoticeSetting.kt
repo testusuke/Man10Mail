@@ -1,6 +1,7 @@
 package net.testusuke.open.man10mail
 
 import net.testusuke.open.man10mail.Main.Companion.plugin
+import net.testusuke.open.man10mail.Main.Companion.prefix
 import org.bukkit.entity.Player
 import java.util.*
 
@@ -32,14 +33,23 @@ object MailNoticeSetting {
 
     fun enableNotice(player: Player){
         noticeList.add(player.uniqueId.toString())
+        player.sendMessage("${prefix}§a通知を有効にしました。")
     }
     fun disableNotice(player:Player){
         noticeList.remove(player.uniqueId.toString())
+        player.sendMessage("${prefix}§c通知を無効にしました。")
     }
     fun isEnableNotice(player: Player):Boolean{
         return noticeList.contains(player.uniqueId.toString())
     }
     fun clear(){
         noticeList.clear()
+    }
+    fun smartModeChange(player: Player){
+        if(isEnableNotice(player)){
+            disableNotice(player)
+        }else{
+            enableNotice(player)
+        }
     }
 }

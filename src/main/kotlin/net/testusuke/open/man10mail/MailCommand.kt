@@ -1,13 +1,16 @@
 package net.testusuke.open.man10mail
 
-import net.testusuke.open.man10mail.DataBase.MailBox
+import net.testusuke.open.man10mail.DataBase.*
 import net.testusuke.open.man10mail.Main.Companion.enable
+import net.testusuke.open.man10mail.Main.Companion.plugin
 import net.testusuke.open.man10mail.Main.Companion.prefix
+import org.bukkit.Bukkit
 import org.bukkit.ChatColor
 import org.bukkit.command.Command
 import org.bukkit.command.CommandExecutor
 import org.bukkit.command.CommandSender
 import org.bukkit.entity.Player
+import org.bukkit.scheduler.BukkitRunnable
 
 /**
  * Created by testusuke on 2020/07/04
@@ -40,7 +43,120 @@ object MailCommand: CommandExecutor {
             "help" -> {
                 sendHelp(sender)
             }
-            "" -> {
+            "notice" -> {
+                if(sender !is Player)return false
+                MailNoticeSetting.smartModeChange(sender)
+            }
+            "send" -> {
+                if(sender !is Player)return false
+                //  args size
+                if(args.size < 2) {
+                    sender.sendMessage("${prefix}§c送信先を指定してください。please enter player name or uuid. /mmail send <player> <title> <message> [tag]")
+                    return false
+                }
+                val id = args[1]
+                val targetPlayer = Bukkit.getServer().getPlayer(id) ?: Bukkit.getOfflinePlayer(id)
+                val uuid = targetPlayer.uniqueId.toString()
+                if(uuid.isEmpty()){
+                    sender.sendMessage("${prefix}§cプレイヤー情報を取得できませんでした。could not get player info.")
+                    return false
+                }
+                //  Title
+                if(args.size < 3){
+                    sender.sendMessage("${prefix}§cタイトルを入力してください。please enter mail title.")
+                    return false
+                }
+                val title = args[2]
+                //  Message
+                if(args.size < 4){
+                    sender.sendMessage("${prefix}§cメッセージを入力してください。please enter message.")
+                    return false
+                }
+                sender.sendMessage("${prefix}§6メール送信手続きをしています。please wait.try send mail.")
+                object : BukkitRunnable(){
+                    override fun run(){
+                        val message = formatMessage(args,3)
+                        //  Send Mail
+                        val result = MailConsole.sendMail(sender.uniqueId.toString(),uuid,title,"0",message,MailSenderType.PLAYER)
+                        if(result is MailResult.Success){
+                            val mailID = result.id
+                            val displayMessage = createDisplayMessage(message)
+                            val msg = """
+                                ${prefix}§aメールを送信します。
+                                §6メール番号: $mailID
+                                §6メール本文:
+                                $displayMessage
+                            """.trimIndent()
+                            sender.sendMessage(msg)
+                        }else if (result is MailResult.Error){
+                            when(result.reason){
+                                MailErrorReason.CAN_NOT_ACCESS_DB -> {
+                                    sender.sendMessage("${prefix}§cデータベースへの問い合わせに失敗しました。")
+                                    cancel()
+                                }
+                            }
+                        }
+                    }
+                }.runTask(plugin)
+            }
+            "send-tag" -> {
+                if(!sender.hasPermission(Permission.ADMIN)){
+                    sender.sendMessage("${prefix}§c権限がありません。You don't have permission.")
+                    return false
+                }
+                //  args size
+                if(args.size < 2) {
+                    sender.sendMessage("${prefix}§c送信先を指定してください。please enter player name or uuid. /mmail send <player> <title> <message> [tag]")
+                    return false
+                }
+                val id = args[1]
+                val targetPlayer = Bukkit.getServer().getPlayer(id) ?: Bukkit.getOfflinePlayer(id)
+                val uuid = targetPlayer.uniqueId.toString()
+                if(uuid.isEmpty()){
+                    sender.sendMessage("${prefix}§cプレイヤー情報を取得できませんでした。could not get player info.")
+                    return false
+                }
+                //  Title
+                if(args.size < 3){
+                    sender.sendMessage("${prefix}§cタイトルを入力してください。please enter mail title.")
+                    return false
+                }
+                val title = args[2]
+                //  tag
+                if(args.size < 4){
+                    sender.sendMessage("${prefix}§cタグを設定してください。please enter tag name.")
+                    return false
+                }
+                val tag = args[3]
+                //  Message
+                if(args.size < 5){
+                    sender.sendMessage("${prefix}§cメッセージを入力してください。please enter message.")
+                    return false
+                }
+                object : BukkitRunnable(){
+                    override fun run(){
+                        val message = formatMessage(args,3)
+                        //  Send Mail
+                        if(result is MailResult.Success){
+                            val mailID = result.id
+                            val displayMessage = createDisplayMessage(message)
+                            val msg = """
+                                ${prefix}§aメールを送信します。
+                                §6メール番号: $mailID
+                                §6メール本文:
+                                $displayMessage
+                            """.trimIndent()
+                            sender.sendMessage(msg)
+                        }else if (result is MailResult.Error){
+                            when(result.reason){
+                                MailErrorReason.CAN_NOT_ACCESS_DB -> {
+                                    sender.sendMessage("${prefix}§cデータベースへの問い合わせに失敗しました。")
+                                    cancel()
+                                }
+                            }
+                        }
+                    }
+                }.runTask(plugin)
             }
 
         }
@@ -59,8 +175,44 @@ object MailCommand: CommandExecutor {
 
     private fun sendHelp(sender: CommandSender){
         val msg = """
-            
+            §e§l===============================
+            §6/mmail -> メールボックスを開きます。
+            §6/mmail help -> ヘルプを表示します。
+            §6/mmail send <player> <title> <message> <- メールを送信します。メッセージの改行は[;]を入力してください。
+            §cAdmin Commands
+            §c/mmail send-tag/send-all/remove these command can use on the console.
+            §c/mmail send-tag <player> <title> <tag> <message><- タグ付きでメッセージを送信します。tag 0<-normal 5<-notice 6<-information etc...
+            §c/mmail send-all <title> <tag> <message> <- 全体メッセージを送信します。
+            §c/mmail remove <mail-id> <- 指定したIDのメールを削除します。
+            §c/mmail remove-player <player[mcid or uuid]> <- 指定したプレイヤーのメールボックスを削除します。
+            §d§dCreated by testusuke
+            §e§l===============================
         """.trimIndent()
         sender.sendMessage(msg)
+    }
+
+    /**
+     * 改行などをするformatの関数
+     * @param args[Array] message
+     * @param index[Int] miss format index
+     *
+     * @return [String] formatted message
+     */
+    private fun formatMessage(args:Array<out String>,index:Int):String{
+        var formatted = ""
+        for((i, str) in args.withIndex()){
+            if(i >= index){
+                formatted += str
+            }
+        }
+        return formatted
+    }
+    private fun createDisplayMessage(msg:String):String{
+        val messages = msg.split(";")
+        var message = ""
+        for(m in messages){
+            message += "$m \n"
+        }
+        return message
     }
 }
