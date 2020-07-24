@@ -139,6 +139,25 @@ object MailConsole {
         return MailResult.Success(amount)
     }
 
+    /**
+     * function of remove mail with id
+     * @param id[Int] id
+     * @return success[Boolean]
+     */
+    fun removeMail(id:Int):Boolean{
+        plugin.dataBase.open()
+        val connection = plugin.dataBase.connection
+        if(connection == null){
+            plugin.dataBase.sendErrorMessage()
+            return false
+        }
+        val sql = "DELETE FROM mail_all WHERE id='$id';"
+        val statement = connection.createStatement()
+        statement.executeUpdate(sql)
+        statement.close()
+        return true
+    }
+
     private fun replaceSQL(sql:String,from: String,senderType: MailSenderType):String{
         when(senderType){
             MailSenderType.PLAYER -> {
