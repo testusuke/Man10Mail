@@ -158,6 +158,34 @@ object MailConsole {
         return true
     }
 
+    data class MailInformation(val id: Int,val from: String,val to: String,val title: String,val message: String,val tag: String)
+    /**
+     * function of get mail information
+     * @param id[Int]
+     * @return info[MailInformation]
+     */
+    fun getInformation(id: Int):MailInformation?{
+        plugin.dataBase.open()
+        val connection = plugin.dataBase.connection
+        if(connection == null){
+            plugin.dataBase.sendErrorMessage()
+            return null
+        }
+        val sql = "SELECT * FROM mail_list WHERE id='$id' LIMIT 1;"
+        val statement = connection.createStatement()
+        val result = statement.executeQuery(sql)
+        if(!result.next())return null
+        val from = result.getString("from_player")
+        val to = result.getString("to_player")
+        val title = result.getString("title")
+        val message = result.getString("message")
+        val tag = result.getString("tag")
+
+        result.close()
+        statement.close()
+        return MailInformation(id,from,to,title,message, tag)
+    }
+
     private fun replaceSQL(sql:String,from: String,senderType: MailSenderType):String{
         when(senderType){
             MailSenderType.PLAYER -> {

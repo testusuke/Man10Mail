@@ -13,7 +13,7 @@ import org.bukkit.inventory.ItemStack
  * Author testusuke
  */
 object MailBox {
-    const val INVENTORY_TITLE = ""
+    const val INVENTORY_TITLE = "§d§lMan10§a§lMail §f§lBox"
 
     /**
      * function of open mail box.
@@ -25,7 +25,7 @@ object MailBox {
         //  Message
         player.sendMessage("${prefix}§a§lデータベースに問い合わせています。少々お待ちください。please wait.query a database.")
         //  DB問い合わせ
-        val sql = "SELECT * FROM mail_list WHERE to_player='${player.uniqueId}' LIMIT 54;"
+        val sql = "SELECT * FROM mail_list WHERE to_player='${player.uniqueId}' ORDER BY `date` desc LIMIT 54;"
         plugin.dataBase.open()
         val connection = plugin.dataBase.connection
         if(connection == null){
@@ -43,7 +43,8 @@ object MailBox {
             val tag = MailUtil.formatTag(resultSet.getString("tag"))
             val date = resultSet.getString("date")
             val read = resultSet.getBoolean("read")
-            val item = createMailItem(to,from,title,MailUtil.formatTag(tag),date,read)
+            val id = resultSet.getInt("id")
+            val item = createMailItem(to,from,title,MailUtil.formatTag(tag),date,read,id)
             inventory.setItem(index,item)
             index++
         }
@@ -111,7 +112,7 @@ object MailBox {
         return from
     }
 
-    private fun createMailItem(to: String, from: String, title: String,tag: String, date: String, read: Boolean): ItemStack {
+    private fun createMailItem(to: String, from: String, title: String,tag: String, date: String, read: Boolean,id:Int): ItemStack {
         val itemStack = ItemStack(Material.PAPER)
         val meta = itemStack.itemMeta
         meta.setDisplayName("§d件名(title): $title")
@@ -125,6 +126,8 @@ object MailBox {
         }else{
             lore.add("§6既読(read): §c未")
         }
+        //  MailID
+        lore.add("$id")
         meta.lore = lore
         itemStack.itemMeta = meta
 

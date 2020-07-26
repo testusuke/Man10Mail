@@ -251,6 +251,7 @@ object MailCommand: CommandExecutor {
                 }.runTask(plugin)
             }
 
+            /* §c/mmail remove <mail-id> <- 指定したIDのメールを削除します。
             "remove" -> {
                 if(sender is Player){
                     //  int check
@@ -268,9 +269,16 @@ object MailCommand: CommandExecutor {
                         }
                         return true
                     }
-
+                    //  所有権チェック
+                    val mailInfo = MailConsole.getInformation(id)
+                    if(mailInfo == null){
+                        sender.sendMessage("${prefix}§cIDが誤っています。")
+                        return false
+                    }
+                    val toPlayer = mailInfo.to
                 }
             }
+            */
 
             else -> sendHelp(sender)
         }
@@ -298,8 +306,6 @@ object MailCommand: CommandExecutor {
             §c/mmail send-tag <player> <title> <tag> <message> <- タグ付きでメッセージを送信します。tag 0<-normal 5<-notice 6<-information etc...
             §c/mmail send-tag <from> <player> <title> <tag> <message> <- 発信元を指定
             §c/mmail send-all <title> <tag> <message> <- 全体メッセージを送信します。
-            §c/mmail remove <mail-id> <- 指定したIDのメールを削除します。
-            §c/mmail remove-player <player[mcid or uuid]> <- 指定したプレイヤーのメールボックスを削除します。
             §d§dCreated by testusuke
             §e§l===============================
         """.trimIndent()
