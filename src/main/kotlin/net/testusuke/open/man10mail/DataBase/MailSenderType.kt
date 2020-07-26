@@ -5,5 +5,5 @@ package net.testusuke.open.man10mail.DataBase
  * @author testusuke
  */
 enum class MailSenderType {
-    PLAYER,SERVER,CUSTOM
+    PLAYER, SERVER, CUSTOM
 }

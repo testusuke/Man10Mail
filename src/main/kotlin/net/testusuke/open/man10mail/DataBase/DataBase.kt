@@ -9,7 +9,7 @@ import java.sql.SQLException
  * Created by testusuke on 2020/07/04
  * @author testusuke
  */
-class DataBase(private val prefix:String) {
+class DataBase(private val prefix: String) {
 
     //  Connection
     var connection: Connection? = null
@@ -56,7 +56,7 @@ class DataBase(private val prefix:String) {
     }
 
     fun open() {
-        if (connection == null){
+        if (connection == null) {
             this.connection = try {
                 DriverManager.getConnection("jdbc:mysql://$host:$port/$db", user, pass)
             } catch (e: SQLException) {

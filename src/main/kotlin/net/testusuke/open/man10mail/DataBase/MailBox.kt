@@ -20,15 +20,15 @@ object MailBox {
      * @param player[Player] Player
      * @return
      */
-    fun openMailBox(player:Player){
-        val inventory = Bukkit.createInventory(null,54, INVENTORY_TITLE)
+    fun openMailBox(player: Player) {
+        val inventory = Bukkit.createInventory(null, 54, INVENTORY_TITLE)
         //  Message
         player.sendMessage("${prefix}§a§lデータベースに問い合わせています。少々お待ちください。please wait.query a database.")
         //  DB問い合わせ
         val sql = "SELECT * FROM mail_list WHERE to_player='${player.uniqueId}' ORDER BY `date` desc LIMIT 54;"
         plugin.dataBase.open()
         val connection = plugin.dataBase.connection
-        if(connection == null){
+        if (connection == null) {
             player.sendMessage("${prefix}§c§lエラーが発生しました。")
             plugin.dataBase.sendErrorMessage()
             return
@@ -36,7 +36,7 @@ object MailBox {
         val statement = connection.createStatement()
         val resultSet = statement.executeQuery(sql)
         var index = 0
-        while (resultSet.next()){
+        while (resultSet.next()) {
             val to = resultSet.getString("to_player")
             val from = formatFromUser(resultSet.getString("from_player"))
             val title = resultSet.getString("title")
@@ -44,8 +44,8 @@ object MailBox {
             val date = resultSet.getString("date")
             val read = resultSet.getBoolean("read")
             val id = resultSet.getInt("id")
-            val item = createMailItem(to,from,title,MailUtil.formatTag(tag),date,read,id)
-            inventory.setItem(index,item)
+            val item = createMailItem(to, from, title, MailUtil.formatTag(tag), date, read, id)
+            inventory.setItem(index, item)
             index++
         }
         resultSet.close()
@@ -53,25 +53,25 @@ object MailBox {
 
     }
 
-    fun showMail(player: Player,mailID:Int){
+    fun showMail(player: Player, mailID: Int) {
         //  Message
         player.sendMessage("${prefix}§a§lデータベースに問い合わせています。少々お待ちください。Please wait.Query a database.")
         //  DB
         val sql = "SELECT * FROM mail_list WHERE to_player='${player.uniqueId}' AND id='${mailID}' LIMIT 1;"
         plugin.dataBase.open()
         val connection = plugin.dataBase.connection
-        if(connection == null){
+        if (connection == null) {
             player.sendMessage("${prefix}§c§lエラーが発生しました。")
             plugin.dataBase.sendErrorMessage()
             return
         }
         val statement = connection.createStatement()
         val resultSet = statement.executeQuery(sql)
-        while (resultSet.next()){
+        while (resultSet.next()) {
             val tag = MailUtil.formatTag(resultSet.getString("tag"))
             val messageList = resultSet.getString("message").split(";")
-            var message:String = ""
-            for(ms in messageList){
+            var message: String = ""
+            for (ms in messageList) {
                 message += "$ms\n"
             }
             var mailMessage = """
@@ -86,7 +86,7 @@ object MailBox {
 
             //  既読
             val read = resultSet.getBoolean("read")
-            if(!read){
+            if (!read) {
                 statement.executeUpdate("UPDATE mail_list SET `read`=true WHERE to_player='${player.uniqueId}' AND id='${resultSet.getInt("id")}';")
             }
         }
@@ -96,23 +96,21 @@ object MailBox {
     }
 
     private fun formatFromUser(str: String): String {
-        var from = ""
-        from = if(str.startsWith("&")){    //  Server
+        return if (str.startsWith("&")) {    //  Server
             str.substring(1)
-        }else if(str.startsWith("#")){  //  Custom
+        } else if (str.startsWith("#")) {  //  Custom
             str.substring(1)
-        }else{
+        } else {
             val player = Bukkit.getServer().getPlayer(str)
-            if(player != null){
+            if (player != null) {
                 return player.uniqueId.toString()
             }
             val offlinePlayer = Bukkit.getServer().getOfflinePlayer(str)
             offlinePlayer.uniqueId.toString()
         }
-        return from
     }
 
-    private fun createMailItem(to: String, from: String, title: String,tag: String, date: String, read: Boolean,id:Int): ItemStack {
+    private fun createMailItem(to: String, from: String, title: String, tag: String, date: String, read: Boolean, id: Int): ItemStack {
         val itemStack = ItemStack(Material.PAPER)
         val meta = itemStack.itemMeta
         meta.setDisplayName("§d件名(title): $title")
@@ -121,9 +119,9 @@ object MailBox {
         lore.add("§6送信先(to): $to")
         lore.add("§6タグ(tag): $tag")
         lore.add("§6日付(date): $date")
-        if(read){
+        if (read) {
             lore.add("§6既読(read): §a済")
-        }else{
+        } else {
             lore.add("§6既読(read): §c未")
         }
         //  MailID

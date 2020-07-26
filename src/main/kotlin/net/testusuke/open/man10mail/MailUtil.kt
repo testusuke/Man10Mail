@@ -11,8 +11,8 @@ object MailUtil {
      * @param tag[String] tag
      *
      */
-    fun convertTag(tag:String):String{
-        return when(tag){
+    fun convertTag(tag: String): String {
+        return when (tag) {
             "0" -> {    //  normal = 0
                 "normal"
             }
@@ -27,8 +27,9 @@ object MailUtil {
             }
         }
     }
-    fun formatTag(tag: String):String{
-        return when(tag){
+
+    fun formatTag(tag: String): String {
+        return when (tag) {
             "normal" -> {    //  normal = 0
                 "§6§lNormal"
             }

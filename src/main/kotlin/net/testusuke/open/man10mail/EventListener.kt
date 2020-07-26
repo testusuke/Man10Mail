@@ -14,30 +14,30 @@ import org.bukkit.inventory.ItemStack
  * Created by testusuke on 2020/07/04
  * @author testusuke
  */
-object EventListener:Listener {
+object EventListener : Listener {
 
     //  InventoryClick
     @EventHandler
-    fun onInventoryClick(event:InventoryClickEvent){
+    fun onInventoryClick(event: InventoryClickEvent) {
         val player = event.whoClicked
-        if(player !is Player)return
+        if (player !is Player) return
         val title = event.view.title
-        if(title == MailBox.INVENTORY_TITLE){
+        if (title == MailBox.INVENTORY_TITLE) {
             //  cancel
             event.isCancelled = true
             //  ItemStack if null -> return
             val item = event.currentItem ?: return
-            if(item.type != Material.PAPER)return
+            if (item.type != Material.PAPER) return
             val id = checkMailID(item)
-            if(id == -1)return
+            if (id == -1) return
             //  show
-            MailBox.showMail(player,id)
+            MailBox.showMail(player, id)
         }
     }
 
     //  PlayerJoinEvent
     @EventHandler
-    fun onPlayerJoin(event: PlayerJoinEvent){
+    fun onPlayerJoin(event: PlayerJoinEvent) {
         val player = event.player
         //  Check
         MailConsole.sendEveryoneMail(player.uniqueId.toString())
@@ -48,13 +48,13 @@ object EventListener:Listener {
      * @param item[ItemStack]
      * @return id[Int]
      */
-    private fun checkMailID(item:ItemStack):Int {
-        var id:Int?
+    private fun checkMailID(item: ItemStack): Int {
+        var id: Int?
         val meta = item.itemMeta ?: return -1
         val lore = meta.lore ?: return -1
         val lastIndex = lore.size - 1
         id = lore[lastIndex].toIntOrNull()
-        if(id == null)return -1
+        if (id == null) return -1
         return id
     }
 }

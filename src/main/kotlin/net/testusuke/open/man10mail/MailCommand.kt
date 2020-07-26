@@ -16,69 +16,69 @@ import org.bukkit.scheduler.BukkitRunnable
  * Created by testusuke on 2020/07/04
  * @author testusuke
  */
-object MailCommand: CommandExecutor {
+object MailCommand : CommandExecutor {
 
     override fun onCommand(sender: CommandSender, command: Command, label: String, args: Array<out String>): Boolean {
-        if(!sender.hasPermission(Permission.GENERAL)){
+        if (!sender.hasPermission(Permission.GENERAL)) {
             sendPermissionError(sender)
             return false
         }
 
-        if(args.isEmpty()){
-            if(sender is Player){
-                if(!enable){
+        if (args.isEmpty()) {
+            if (sender is Player) {
+                if (!enable) {
                     sendDisable(sender)
                     return false
                 }
                 sender.sendMessage("${prefix}§aメールボックスを開きます。")
                 MailBox.openMailBox(sender)
                 return true
-            }else{
+            } else {
                 sendNotPlayerError(sender)
                 return false
             }
         }
         //  args[0]
-        when(args[0]){
+        when (args[0]) {
             "help" -> {
                 sendHelp(sender)
             }
             "notice" -> {
-                if(sender !is Player)return false
+                if (sender !is Player) return false
                 MailNoticeSetting.smartModeChange(sender)
             }
             "send" -> {
-                if(sender !is Player)return false
+                if (sender !is Player) return false
                 //  args size
-                if(args.size < 2) {
+                if (args.size < 2) {
                     sender.sendMessage("${prefix}§c送信先を指定してください。please enter player name or uuid. /mmail send <player> <title> <message> [tag]")
                     return false
                 }
                 val id = args[1]
                 val targetPlayer = Bukkit.getServer().getPlayer(id) ?: Bukkit.getOfflinePlayer(id)
                 val uuid = targetPlayer.uniqueId.toString()
-                if(uuid.isEmpty()){
+                if (uuid.isEmpty()) {
                     sender.sendMessage("${prefix}§cプレイヤー情報を取得できませんでした。could not get player info.")
                     return false
                 }
                 //  Title
-                if(args.size < 3){
+                if (args.size < 3) {
                     sender.sendMessage("${prefix}§cタイトルを入力してください。please enter mail title.")
                     return false
                 }
                 val title = args[2]
                 //  Message
-                if(args.size < 4){
+                if (args.size < 4) {
                     sender.sendMessage("${prefix}§cメッセージを入力してください。please enter message.")
                     return false
                 }
                 sender.sendMessage("${prefix}§6メール送信手続きをしています。please wait.try send mail.")
-                object : BukkitRunnable(){
-                    override fun run(){
-                        val message = formatMessage(args,3)
+                object : BukkitRunnable() {
+                    override fun run() {
+                        val message = formatMessage(args, 3)
                         //  Send Mail
-                        val result = MailConsole.sendMail(sender.uniqueId.toString(),uuid,title,"0",message,MailSenderType.PLAYER)
-                        if(result is MailResult.Success){
+                        val result = MailConsole.sendMail(sender.uniqueId.toString(), uuid, title, "0", message, MailSenderType.PLAYER)
+                        if (result is MailResult.Success) {
                             val mailID = result.id
                             val displayMessage = createDisplayMessage(message)
                             val msg = """
@@ -88,8 +88,8 @@ object MailCommand: CommandExecutor {
                                 $displayMessage
                             """.trimIndent()
                             sender.sendMessage(msg)
-                        }else if (result is MailResult.Error){
-                            when(result.reason){
+                        } else if (result is MailResult.Error) {
+                            when (result.reason) {
                                 MailErrorReason.CAN_NOT_ACCESS_DB -> {
                                     sender.sendMessage("${prefix}§cデータベースへの問い合わせに失敗しました。")
                                     cancel()
@@ -162,22 +162,22 @@ object MailCommand: CommandExecutor {
                     }.runTask(plugin)
                 } else {
                     //  from
-                    if(args.size < 2)return false
+                    if (args.size < 2) return false
                     val from = args[1]
                     //  args size
                     if (args.size < 3) return false
                     val id = args[2]
                     val targetPlayer = Bukkit.getServer().getPlayer(id) ?: Bukkit.getOfflinePlayer(id)
                     val uuid = targetPlayer.uniqueId.toString()
-                    if (uuid.isEmpty())return false
+                    if (uuid.isEmpty()) return false
                     //  Title
-                    if (args.size < 4)return false
+                    if (args.size < 4) return false
                     val title = args[3]
                     //  tag
-                    if (args.size < 5)return false
+                    if (args.size < 5) return false
                     val tag = args[4]
                     //  Message
-                    if (args.size < 6)return false
+                    if (args.size < 6) return false
 
                     object : BukkitRunnable() {
                         override fun run() {
@@ -210,26 +210,26 @@ object MailCommand: CommandExecutor {
 
             "send-all" -> {
                 //  Title
-                if(args.size < 2){
+                if (args.size < 2) {
                     sender.sendMessage("${prefix}§cタイトルを入力してください。please enter mail title.")
                     return false
                 }
                 val title = args[1]
                 //  tag
-                if (args.size < 3)return false
+                if (args.size < 3) return false
                 val tag = args[2]
                 //  Message
-                if(args.size < 4){
+                if (args.size < 4) {
                     sender.sendMessage("${prefix}§cメッセージを入力してください。please enter message.")
                     return false
                 }
                 sender.sendMessage("${prefix}§6メール送信手続きをしています。please wait.try send mail.")
-                object : BukkitRunnable(){
-                    override fun run(){
-                        val message = formatMessage(args,3)
+                object : BukkitRunnable() {
+                    override fun run() {
+                        val message = formatMessage(args, 3)
                         //  Send Mail
-                        val result = MailConsole.issueEveryoneMail("SERVER",title,tag,message,MailSenderType.SERVER)
-                        if(result is MailResult.Success){
+                        val result = MailConsole.issueEveryoneMail("SERVER", title, tag, message, MailSenderType.SERVER)
+                        if (result is MailResult.Success) {
                             val mailID = result.id
                             val displayMessage = createDisplayMessage(message)
                             val msg = """
@@ -239,8 +239,8 @@ object MailCommand: CommandExecutor {
                                 $displayMessage
                             """.trimIndent()
                             sender.sendMessage(msg)
-                        }else if (result is MailResult.Error){
-                            when(result.reason){
+                        } else if (result is MailResult.Error) {
+                            when (result.reason) {
                                 MailErrorReason.CAN_NOT_ACCESS_DB -> {
                                     sender.sendMessage("${prefix}§cデータベースへの問い合わせに失敗しました。")
                                     cancel()
@@ -285,17 +285,19 @@ object MailCommand: CommandExecutor {
         return false
     }
 
-    private fun sendPermissionError(sender:CommandSender){
+    private fun sendPermissionError(sender: CommandSender) {
         sender.sendMessage("${ChatColor.RED}You do not have permission.")
     }
-    private fun sendNotPlayerError(sender:CommandSender){
+
+    private fun sendNotPlayerError(sender: CommandSender) {
         sender.sendMessage("${ChatColor.RED}can not use console.")
     }
-    private fun sendDisable(player: Player){
+
+    private fun sendDisable(player: Player) {
         player.sendMessage("${prefix}§c§l現在利用できません。")
     }
 
-    private fun sendHelp(sender: CommandSender){
+    private fun sendHelp(sender: CommandSender) {
         val msg = """
             §e§l===============================
             §6/mmail -> メールボックスを開きます。
@@ -319,19 +321,20 @@ object MailCommand: CommandExecutor {
      *
      * @return [String] formatted message
      */
-    private fun formatMessage(args:Array<out String>,index:Int):String{
+    private fun formatMessage(args: Array<out String>, index: Int): String {
         var formatted = ""
-        for((i, str) in args.withIndex()){
-            if(i >= index){
+        for ((i, str) in args.withIndex()) {
+            if (i >= index) {
                 formatted += str
             }
         }
         return formatted
     }
-    private fun createDisplayMessage(msg:String):String{
+
+    private fun createDisplayMessage(msg: String): String {
         val messages = msg.split(";")
         var message = ""
-        for(m in messages){
+        for (m in messages) {
             message += "$m \n"
         }
         return message

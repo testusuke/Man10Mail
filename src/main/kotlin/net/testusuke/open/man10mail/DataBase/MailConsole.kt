@@ -24,14 +24,14 @@ object MailConsole {
      * @param senderType[MailSenderType] uuid/mcid=PLAYER server=SERVER custom sender=CUSTOM(先頭に[#]が代入される。)
      * @return mailResult[MailResult<V>]
      */
-    fun sendMail(from:String,to:String,title:String,tag:String,message:String,senderType: MailSenderType): MailResult {
+    fun sendMail(from: String, to: String, title: String, tag: String, message: String, senderType: MailSenderType): MailResult {
         val current = LocalDateTime.now()
         val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
         val formatted = current.format(formatter)
         val sql = "INSERT INTO mail_list (to_player,from_player,title,message,tag,date) VALUES('${to}','%from%','${title}','${message}','${MailUtil.convertTag(tag)}','${formatted}');"
         plugin.dataBase.open()
         val connection = plugin.dataBase.connection
-        if(connection == null){
+        if (connection == null) {
             plugin.dataBase.sendErrorMessage()
             return MailResult.Error(MailErrorReason.CAN_NOT_ACCESS_DB)
         }
@@ -39,7 +39,7 @@ object MailConsole {
         statement.executeUpdate(replaceSQL(sql, from, senderType), Statement.RETURN_GENERATED_KEYS)
         val resultSet = statement.generatedKeys
         var id = 0
-        if(resultSet.next()){
+        if (resultSet.next()) {
             id = resultSet.getInt("id")
         }
         //  サーバー内にユーザーがいる場合は通知
@@ -55,22 +55,22 @@ object MailConsole {
      * @param tag[String] タグ
      * @param message[String] メッセージ [;]で改行
      */
-    fun issueEveryoneMail(from:String,title:String,tag:String,message:String,senderType: MailSenderType): MailResult {
+    fun issueEveryoneMail(from: String, title: String, tag: String, message: String, senderType: MailSenderType): MailResult {
         val current = LocalDateTime.now()
         val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
         val formatted = current.format(formatter)
         val sql = "INSERT INTO mail_all (from_player,title,message,tag,`date`) VALUES('%from%','${title}','${message}','${MailUtil.convertTag(tag)}','${formatted}');"
         plugin.dataBase.open()
         val connection = plugin.dataBase.connection
-        if(connection == null){
+        if (connection == null) {
             plugin.dataBase.sendErrorMessage()
             return MailResult.Error(MailErrorReason.CAN_NOT_ACCESS_DB)
         }
         val statement = connection.createStatement()
-        statement.executeUpdate(replaceSQL(sql,from,senderType), Statement.RETURN_GENERATED_KEYS)
+        statement.executeUpdate(replaceSQL(sql, from, senderType), Statement.RETURN_GENERATED_KEYS)
         val resultSet = statement.generatedKeys
         var id = 0
-        if(resultSet.next()){
+        if (resultSet.next()) {
             id = resultSet.getInt("id")
         }
         //  close
@@ -78,7 +78,7 @@ object MailConsole {
         statement.close()
 
         //  サバ内のプレイヤーに通知
-        for(player in Bukkit.getOnlinePlayers()){
+        for (player in Bukkit.getOnlinePlayers()) {
             val uuid = player.uniqueId.toString()
             sendEveryoneMail(uuid)
             player.sendMessage("${prefix}§6新しいメールが届いています。")
@@ -92,20 +92,20 @@ object MailConsole {
      * @param uuid[String] ターゲット uuid
      * @return amount[Int] 読み込んだカラム数
      */
-    fun sendEveryoneMail(uuid:String): MailResult {
+    fun sendEveryoneMail(uuid: String): MailResult {
         plugin.dataBase.open()
         val connection = plugin.dataBase.connection
-        if(connection == null){
+        if (connection == null) {
             plugin.dataBase.sendErrorMessage()
             return MailResult.Error(MailErrorReason.CAN_NOT_ACCESS_DB)
         }
         val selectReadSQL = "SELECT from_mail_id FROM mail_read WHERE to_player='${uuid}';"
         val selectReadStatement = connection.createStatement()
         val selectReadResult = selectReadStatement.executeQuery(selectReadSQL)
-        if(!selectReadResult.next())return MailResult.Success(0)    //  none result
+        if (!selectReadResult.next()) return MailResult.Success(0)    //  none result
         //  送信済みのMail ID
         val readMailList = mutableListOf<Int>()
-        while (selectReadResult.next()){
+        while (selectReadResult.next()) {
             readMailList.add(selectReadResult.getInt("from_mail_id"))
         }
         //  close
@@ -116,12 +116,12 @@ object MailConsole {
         val selectAllSQL = "SELECT * FROM mail_all;"
         val selectAllStatement = connection.createStatement()
         val selectAllResult = selectAllStatement.executeQuery(selectAllSQL)
-        if(!selectAllResult.next())return MailResult.Success(0) //  none result
+        if (!selectAllResult.next()) return MailResult.Success(0) //  none result
         //  create statement
         val insertMailStatement = connection.createStatement()
         var amount = 0
-        while (selectAllResult.next()){
-            if(!readMailList.contains(selectAllResult.getInt("id"))){
+        while (selectAllResult.next()) {
+            if (!readMailList.contains(selectAllResult.getInt("id"))) {
                 val from = selectAllResult.getString("from_player")
                 val title = selectAllResult.getString("title")
                 val tag = selectAllResult.getString("tag")
@@ -144,10 +144,10 @@ object MailConsole {
      * @param id[Int] id
      * @return success[Boolean]
      */
-    fun removeMail(id:Int):Boolean{
+    fun removeMail(id: Int): Boolean {
         plugin.dataBase.open()
         val connection = plugin.dataBase.connection
-        if(connection == null){
+        if (connection == null) {
             plugin.dataBase.sendErrorMessage()
             return false
         }
@@ -158,23 +158,24 @@ object MailConsole {
         return true
     }
 
-    data class MailInformation(val id: Int,val from: String,val to: String,val title: String,val message: String,val tag: String)
+    data class MailInformation(val id: Int, val from: String, val to: String, val title: String, val message: String, val tag: String)
+
     /**
      * function of get mail information
      * @param id[Int]
      * @return info[MailInformation]
      */
-    fun getInformation(id: Int):MailInformation?{
+    fun getInformation(id: Int): MailInformation? {
         plugin.dataBase.open()
         val connection = plugin.dataBase.connection
-        if(connection == null){
+        if (connection == null) {
             plugin.dataBase.sendErrorMessage()
             return null
         }
         val sql = "SELECT * FROM mail_list WHERE id='$id' LIMIT 1;"
         val statement = connection.createStatement()
         val result = statement.executeQuery(sql)
-        if(!result.next())return null
+        if (!result.next()) return null
         val from = result.getString("from_player")
         val to = result.getString("to_player")
         val title = result.getString("title")
@@ -183,19 +184,19 @@ object MailConsole {
 
         result.close()
         statement.close()
-        return MailInformation(id,from,to,title,message, tag)
+        return MailInformation(id, from, to, title, message, tag)
     }
 
-    private fun replaceSQL(sql:String,from: String,senderType: MailSenderType):String{
-        when(senderType){
+    private fun replaceSQL(sql: String, from: String, senderType: MailSenderType): String {
+        when (senderType) {
             MailSenderType.PLAYER -> {
-                sql.replace("%from%",from)
+                sql.replace("%from%", from)
             }
             MailSenderType.SERVER -> {
-                sql.replace("%from%","&SERVER")
+                sql.replace("%from%", "&SERVER")
             }
             MailSenderType.CUSTOM -> {
-                sql.replace("%from%","#${from}")
+                sql.replace("%from%", "#${from}")
             }
         }
         return sql

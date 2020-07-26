@@ -8,17 +8,18 @@ import java.lang.NullPointerException
  * Created by testusuke on 2020/07/03
  * @author testusuke
  */
-class Main:JavaPlugin() {
+class Main : JavaPlugin() {
 
-    companion object{
+    companion object {
         lateinit var plugin: Main
+
         //  Enable
         var enable = false
         var prefix = "§e[§dMan10§aMail§e]§f"
     }
 
     //  DB
-    lateinit var dataBase:DataBase
+    lateinit var dataBase: DataBase
 
     override fun onEnable() {
         //  instance
@@ -32,7 +33,7 @@ class Main:JavaPlugin() {
         //  Command
         getCommand("mmail")?.setExecutor(MailCommand)
         //  Event
-        server.pluginManager.registerEvents(EventListener,this)
+        server.pluginManager.registerEvents(EventListener, this)
         //  NoticeData
         MailNoticeSetting.loadList()
 
@@ -40,7 +41,7 @@ class Main:JavaPlugin() {
         try {
             enable = config.getBoolean("enable")
             prefix = config.getString("prefix").toString()
-        }catch (e:NullPointerException){
+        } catch (e: NullPointerException) {
             logger.info("can not load config.")
         }
     }
@@ -51,7 +52,7 @@ class Main:JavaPlugin() {
         MailNoticeSetting.saveList()
 
         //  enable
-        config.set("enable",enable)
+        config.set("enable", enable)
         this.saveConfig()
     }
 }
