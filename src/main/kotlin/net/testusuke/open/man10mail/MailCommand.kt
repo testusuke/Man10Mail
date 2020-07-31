@@ -31,7 +31,12 @@ object MailCommand : CommandExecutor {
                     return false
                 }
                 sender.sendMessage("${prefix}§aメールボックスを開きます。")
-                MailBox.openMailBox(sender)
+                object : BukkitRunnable(){
+                    override fun run() {
+                        MailBox.openMailBox(sender)
+                    }
+                }.runTask(plugin)
+
                 return true
             } else {
                 sendNotPlayerError(sender)
@@ -45,10 +50,18 @@ object MailCommand : CommandExecutor {
             }
             "notice" -> {
                 if (sender !is Player) return false
+                if (!enable) {
+                    sendDisable(sender)
+                    return false
+                }
                 MailNoticeSetting.smartModeChange(sender)
             }
             "send" -> {
                 if (sender !is Player) return false
+                if (!enable) {
+                    sendDisable(sender)
+                    return false
+                }
                 //  args size
                 if (args.size < 2) {
                     sender.sendMessage("${prefix}§c送信先を指定してください。please enter player name or uuid. /mmail send <player> <title> <message> [tag]")
@@ -251,6 +264,13 @@ object MailCommand : CommandExecutor {
                 }.runTask(plugin)
             }
 
+            "on" -> {
+                changeEnable(sender, true)
+            }
+            "off" -> {
+                changeEnable(sender, false)
+            }
+
             /* §c/mmail remove <mail-id> <- 指定したIDのメールを削除します。
             "remove" -> {
                 if(sender is Player){
@@ -285,6 +305,19 @@ object MailCommand : CommandExecutor {
         return false
     }
 
+    private fun changeEnable(sender: CommandSender, mode: Boolean) {
+        if (!sender.hasPermission(Permission.ADMIN)) {
+            sendPermissionError(sender)
+            return
+        }
+        if (enable == mode) {
+            sender.sendMessage("${prefix}§cすでに§e${mode}§cになっています。")
+        } else {
+            enable = true
+            sender.sendMessage("${prefix}§aプラグインが§e${mode}§aになりました。")
+        }
+    }
+
     private fun sendPermissionError(sender: CommandSender) {
         sender.sendMessage("${ChatColor.RED}You do not have permission.")
     }
@@ -308,6 +341,7 @@ object MailCommand : CommandExecutor {
             §c/mmail send-tag <player> <title> <tag> <message> <- タグ付きでメッセージを送信します。tag 0<-normal 5<-notice 6<-information etc...
             §c/mmail send-tag <from> <player> <title> <tag> <message> <- 発信元を指定
             §c/mmail send-all <title> <tag> <message> <- 全体メッセージを送信します。
+            §c/mmail on/off <- プラグインを有効化/無効化します。
             §d§dCreated by testusuke
             §e§l===============================
         """.trimIndent()

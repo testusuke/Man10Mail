@@ -40,7 +40,7 @@ class Main : JavaPlugin() {
         //  Prefix
         try {
             enable = config.getBoolean("enable")
-            prefix = config.getString("prefix").toString()
+            prefix = config.getString("prefix").toString().replace("&","§")
         } catch (e: NullPointerException) {
             logger.info("can not load config.")
         }

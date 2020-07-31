@@ -2,6 +2,7 @@ package net.testusuke.open.man10mail
 
 import net.testusuke.open.man10mail.DataBase.MailBox
 import net.testusuke.open.man10mail.DataBase.MailConsole
+import net.testusuke.open.man10mail.Main.Companion.plugin
 import org.bukkit.Material
 import org.bukkit.entity.Player
 import org.bukkit.event.EventHandler
@@ -9,6 +10,7 @@ import org.bukkit.event.Listener
 import org.bukkit.event.inventory.InventoryClickEvent
 import org.bukkit.event.player.PlayerJoinEvent
 import org.bukkit.inventory.ItemStack
+import org.bukkit.scheduler.BukkitRunnable
 
 /**
  * Created by testusuke on 2020/07/04
@@ -31,7 +33,12 @@ object EventListener : Listener {
             val id = checkMailID(item)
             if (id == -1) return
             //  show
-            MailBox.showMail(player, id)
+            object : BukkitRunnable(){
+                override fun run() {
+                    MailBox.showMail(player, id)
+                }
+            }.runTask(plugin)
+
         }
     }
 
@@ -40,7 +47,12 @@ object EventListener : Listener {
     fun onPlayerJoin(event: PlayerJoinEvent) {
         val player = event.player
         //  Check
-        MailConsole.sendEveryoneMail(player.uniqueId.toString())
+        object : BukkitRunnable(){
+            override fun run() {
+                MailConsole.sendEveryoneMail(player.uniqueId.toString())
+            }
+        }.runTask(plugin)
+
     }
 
     /**

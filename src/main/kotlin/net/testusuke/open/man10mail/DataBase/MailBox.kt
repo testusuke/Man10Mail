@@ -51,6 +51,8 @@ object MailBox {
         resultSet.close()
         statement.close()
 
+        //  OpenInventory
+        player.openInventory(inventory)
     }
 
     fun showMail(player: Player, mailID: Int) {
