@@ -58,7 +58,7 @@ class DataBase(private val prefix: String) {
     fun open() {
         if (connection == null) {
             this.connection = try {
-                DriverManager.getConnection("jdbc:mysql://$host:$port/$db", user, pass)
+                DriverManager.getConnection("jdbc:mysql://$host:$port/$db?autoReconnect=true&useSSL=false", user, pass)
             } catch (e: SQLException) {
                 e.printStackTrace()
                 plugin.logger.warning("can not get connection.")
