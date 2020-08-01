@@ -38,7 +38,7 @@ object EventListener : Listener {
                     MailBox.showMail(player, id)
                 }
             }.runTask(plugin)
-
+            player.closeInventory()
         }
     }
 
