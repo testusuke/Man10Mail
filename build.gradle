@@ -4,7 +4,7 @@ plugins {
 }
 
 group 'net.testusuke'
-version '1.1-dev'
+version '1.0'
 
 repositories {
     mavenCentral()
@@ -20,19 +20,6 @@ dependencies {
 
 compileKotlin {
     kotlinOptions.jvmTarget = "1.8"
-}
-
-bukkit {
-    name = project.name
-    version = project.version.toString()
-    main = group.toString() + ".open.man10mail.Main"
-    author = "testusuke"
-    apiVersion = "1.15"
-    commands {
-        register("mmail"){
-            description("general command")
-        }
-    }
 }
 
 jar {
