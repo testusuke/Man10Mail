@@ -1,0 +1,7 @@
+name: Man10Mail
+version: 1.0
+api-version: 1.15
+main: net.testusuke.open.man10mail.Main
+author: testusuke
+commands:
+  mmail:
