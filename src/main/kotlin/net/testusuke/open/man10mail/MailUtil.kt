@@ -1,5 +1,12 @@
 package net.testusuke.open.man10mail
 
+import net.testusuke.open.man10mail.Main.Companion.plugin
+import org.bukkit.NamespacedKey
+import org.bukkit.command.CommandSender
+import org.bukkit.entity.Player
+import org.bukkit.inventory.ItemStack
+import org.bukkit.persistence.PersistentDataType
+
 /**
  * Created by testusuke on 2020/07/11
  * @author testusuke
@@ -44,4 +51,40 @@ object MailUtil {
             }
         }
     }
+
+    /**
+     * send message
+     */
+    fun sendMailMessage(player:Player,msg:String){
+        val messages = msg.split(";")
+        for (m in messages) {
+            player.sendMessage(m.replace("&","§"))
+        }
+    }
+    fun sendMailMessage(sender:CommandSender,msg:String){
+        val messages = msg.split(";")
+        for (m in messages) {
+            sender.sendMessage(m.replace("&","§"))
+        }
+    }
+
+    /**
+     * Set/Get NBT tag to/from Item
+     * @param id[Int] Mail ID
+     * @param item[ItemStack] Item
+     * @return item[ItemStack] item
+     */
+    //  Setter
+    fun setMailID(id:Int,item:ItemStack): ItemStack{
+        val meta = item.itemMeta
+        meta.persistentDataContainer.set(NamespacedKey(plugin,"id"), PersistentDataType.INTEGER, id)
+        item.itemMeta = meta
+        return item
+    }
+    //  Getter
+    fun getMailID(item:ItemStack):Int{
+        val meta = item.itemMeta
+        return meta.persistentDataContainer[NamespacedKey(plugin,"id"), PersistentDataType.INTEGER] ?: return -0
+    }
+
 }

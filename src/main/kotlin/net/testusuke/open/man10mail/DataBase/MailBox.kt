@@ -7,6 +7,8 @@ import org.bukkit.Bukkit
 import org.bukkit.Material
 import org.bukkit.entity.Player
 import org.bukkit.inventory.ItemStack
+import java.util.*
+import kotlin.collections.ArrayList
 
 /**
  * Created on 2020/07/07
@@ -37,14 +39,15 @@ object MailBox {
         val resultSet = statement.executeQuery(sql)
         var index = 0
         while (resultSet.next()) {
-            val to = resultSet.getString("to_player")
+            //val to = resultSet.getString("to_player")
             val from = formatFromUser(resultSet.getString("from_player"))
             val title = resultSet.getString("title")
             val tag = MailUtil.formatTag(resultSet.getString("tag"))
+            val message = resultSet.getString("message")
             val date = resultSet.getString("date")
             val read = resultSet.getBoolean("read")
             val id = resultSet.getInt("id")
-            val item = createMailItem(to, from, title, MailUtil.formatTag(tag), date, read, id)
+            val item = createMailItem(from, title, MailUtil.formatTag(tag), date,message, read, id)
             inventory.setItem(index, item)
             index++
         }
@@ -69,29 +72,27 @@ object MailBox {
         }
         val statement = connection.createStatement()
         val resultSet = statement.executeQuery(sql)
-        while (resultSet.next()) {
-            val tag = MailUtil.formatTag(resultSet.getString("tag"))
-            val messageList = resultSet.getString("message").split(";")
-            var message: String = ""
-            for (ms in messageList) {
-                message += "$ms\n"
-            }
-            var mailMessage = """
-                §6タイトル(title): ${resultSet.getString("title")}
-                §6タグ(tag): ${MailUtil.formatTag(tag)}
-                §6メッセージ(message):
-                $message
-                §6送信元(from): ${formatFromUser(resultSet.getString("from_player"))}
-                §6日付(date): ${resultSet.getString("date")}
-            """.trimIndent()
-            player.sendMessage(mailMessage)
 
-            //  既読
-            val read = resultSet.getBoolean("read")
-            if (!read) {
-                statement.executeUpdate("UPDATE mail_list SET `read`=true WHERE to_player='${player.uniqueId}' AND id='${resultSet.getInt("id")}';")
-            }
+        resultSet.next()
+        val tag = MailUtil.formatTag(resultSet.getString("tag"))
+
+        player.sendMessage("§6タイトル(title): ${resultSet.getString("title")}")
+        player.sendMessage("§6タグ(tag): ${MailUtil.formatTag(tag)}")
+        player.sendMessage("§6メッセージ(message):")
+        MailUtil.sendMailMessage(player,resultSet.getString("message"))
+        player.sendMessage("§6送信元(from): ${formatFromUser(resultSet.getString("from_player"))}")
+        player.sendMessage("§6日付(date): ${resultSet.getString("date")}")
+
+        //  既読
+        val read = resultSet.getBoolean("read")
+        if (!read) {
+            statement.executeUpdate(
+                "UPDATE mail_list SET `read`=true WHERE to_player='${player.uniqueId}' AND id='${resultSet.getInt(
+                    "id"
+                )}';"
+            )
         }
+
         resultSet.close()
         statement.close()
 
@@ -103,34 +104,43 @@ object MailBox {
         } else if (str.startsWith("#")) {  //  Custom
             str.substring(1)
         } else {
-            val player = Bukkit.getServer().getPlayer(str)
-            if (player != null) {
-                return player.uniqueId.toString()
+            try {
+                val uuid = UUID.fromString(str)
+                val player = Bukkit.getServer().getPlayer(uuid)
+                if (player != null) {
+                    return player.name
+                }
+                val offlinePlayer = Bukkit.getServer().getOfflinePlayer(uuid)
+                offlinePlayer.name ?: "none"
+            }catch (e:Exception){
+                return str
             }
-            val offlinePlayer = Bukkit.getServer().getOfflinePlayer(str)
-            offlinePlayer.uniqueId.toString()
         }
     }
 
-    private fun createMailItem(to: String, from: String, title: String, tag: String, date: String, read: Boolean, id: Int): ItemStack {
+    private fun createMailItem(from: String, title: String, tag: String, date: String,message:String, read: Boolean, id: Int): ItemStack {
         val itemStack = ItemStack(Material.PAPER)
         val meta = itemStack.itemMeta
         meta.setDisplayName("§d件名(title): $title")
         val lore = ArrayList<String>()
         lore.add("§6送信元(from): $from")
-        lore.add("§6送信先(to): $to")
         lore.add("§6タグ(tag): $tag")
+        lore.add("§6メッセージ(msg): ${getFirstLine(message)}")
         lore.add("§6日付(date): $date")
         if (read) {
-            lore.add("§6既読(read): §a済")
+            lore.add("§6既読(read): §a○")
         } else {
-            lore.add("§6既読(read): §c未")
+            lore.add("§6既読(read): §c×")
         }
-        //  MailID
-        lore.add("$id")
         meta.lore = lore
         itemStack.itemMeta = meta
+        //  Mail ID
+        return MailUtil.setMailID(id,itemStack)
+    }
 
-        return itemStack
+    private fun getFirstLine(message: String):String{
+        //  replace
+        val split = message.split(";")
+        return split[0].replace("&","§")
     }
 }

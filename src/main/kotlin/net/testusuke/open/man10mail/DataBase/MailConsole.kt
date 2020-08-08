@@ -7,6 +7,7 @@ import org.bukkit.Bukkit
 import java.sql.Statement
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
+import java.util.*
 
 /**
  * Created by testusuke on 2020/07/04
@@ -28,7 +29,8 @@ object MailConsole {
         val current = LocalDateTime.now()
         val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
         val formatted = current.format(formatter)
-        val sql = "INSERT INTO mail_list (to_player,from_player,title,message,tag,date) VALUES('${to}','%from%','${title}','${message}','${MailUtil.convertTag(tag)}','${formatted}');"
+        val formattedFrom = formatFromUser(from,senderType)
+        var sql = "INSERT INTO mail_list (to_player,from_player,title,message,tag,date) VALUES('${to}','$formattedFrom','${title}','${message}','${MailUtil.convertTag(tag)}','${formatted}');"
         plugin.dataBase.open()
         val connection = plugin.dataBase.connection
         if (connection == null) {
@@ -36,14 +38,16 @@ object MailConsole {
             return MailResult.Error(MailErrorReason.CAN_NOT_ACCESS_DB)
         }
         val statement = connection.createStatement()
-        statement.executeUpdate(replaceSQL(sql, from, senderType), Statement.RETURN_GENERATED_KEYS)
+
+        statement.executeUpdate(sql, Statement.RETURN_GENERATED_KEYS)
         val resultSet = statement.generatedKeys
-        var id = 0
-        if (resultSet.next()) {
-            id = resultSet.getInt("id")
-        }
+        resultSet.next()
+        val id = resultSet.getInt(1)
+        resultSet.close()
+        statement.close()
+
         //  サーバー内にユーザーがいる場合は通知
-        Bukkit.getPlayer(to)?.sendMessage("${prefix}§6新しいメールが届いています。")
+        Bukkit.getPlayer(UUID.fromString(to))?.sendMessage("${prefix}§6新しいメールが届いています。")
 
         return MailResult.Success(id)
     }
@@ -59,7 +63,8 @@ object MailConsole {
         val current = LocalDateTime.now()
         val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
         val formatted = current.format(formatter)
-        val sql = "INSERT INTO mail_all (from_player,title,message,tag,`date`) VALUES('%from%','${title}','${message}','${MailUtil.convertTag(tag)}','${formatted}');"
+        val formattedFrom = formatFromUser(from,senderType)
+        var sql = "INSERT INTO mail_all (from_name,title,message,tag,`date`) VALUES('$formattedFrom','${title}','${message}','${MailUtil.convertTag(tag)}','${formatted}');"
         plugin.dataBase.open()
         val connection = plugin.dataBase.connection
         if (connection == null) {
@@ -67,12 +72,12 @@ object MailConsole {
             return MailResult.Error(MailErrorReason.CAN_NOT_ACCESS_DB)
         }
         val statement = connection.createStatement()
-        statement.executeUpdate(replaceSQL(sql, from, senderType), Statement.RETURN_GENERATED_KEYS)
+
+        statement.executeUpdate(sql, Statement.RETURN_GENERATED_KEYS)
         val resultSet = statement.generatedKeys
-        var id = 0
-        if (resultSet.next()) {
-            id = resultSet.getInt("id")
-        }
+        resultSet.next()
+        val id = resultSet.getInt(1)
+
         //  close
         resultSet.close()
         statement.close()
@@ -102,7 +107,6 @@ object MailConsole {
         val selectReadSQL = "SELECT from_mail_id FROM mail_read WHERE to_player='${uuid}';"
         val selectReadStatement = connection.createStatement()
         val selectReadResult = selectReadStatement.executeQuery(selectReadSQL)
-        if (!selectReadResult.next()) return MailResult.Success(0)    //  none result
         //  送信済みのMail ID
         val readMailList = mutableListOf<Int>()
         while (selectReadResult.next()) {
@@ -116,19 +120,21 @@ object MailConsole {
         val selectAllSQL = "SELECT * FROM mail_all;"
         val selectAllStatement = connection.createStatement()
         val selectAllResult = selectAllStatement.executeQuery(selectAllSQL)
-        if (!selectAllResult.next()) return MailResult.Success(0) //  none result
         //  create statement
         val insertMailStatement = connection.createStatement()
         var amount = 0
         while (selectAllResult.next()) {
             if (!readMailList.contains(selectAllResult.getInt("id"))) {
-                val from = selectAllResult.getString("from_player")
+                val from = selectAllResult.getString("from_name")
                 val title = selectAllResult.getString("title")
                 val tag = selectAllResult.getString("tag")
                 val message = selectAllResult.getString("message")
                 val date = selectAllResult.getString("date")
                 val insertMailSQL = "INSERT INTO mail_list (to_player,from_player,title,message,tag,date) VALUES('${uuid}','${from}','${title}','${message}','${MailUtil.convertTag(tag)}','${date}');"
                 insertMailStatement.executeUpdate(insertMailSQL)
+
+                val insertMailReadSQL = "INSERT INTO mail_read (to_player,from_mail_id) VALUES ('${uuid}','${selectAllResult.getInt("id")}');"
+                insertMailStatement.executeUpdate(insertMailReadSQL)
                 amount++
             }
         }
@@ -175,7 +181,7 @@ object MailConsole {
         val sql = "SELECT * FROM mail_list WHERE id='$id' LIMIT 1;"
         val statement = connection.createStatement()
         val result = statement.executeQuery(sql)
-        if (!result.next()) return null
+        result.next()
         val from = result.getString("from_player")
         val to = result.getString("to_player")
         val title = result.getString("title")
@@ -187,19 +193,18 @@ object MailConsole {
         return MailInformation(id, from, to, title, message, tag)
     }
 
-    private fun replaceSQL(sql: String, from: String, senderType: MailSenderType): String {
-        when (senderType) {
+    private fun formatFromUser(from: String, senderType: MailSenderType): String {
+        return when (senderType) {
             MailSenderType.PLAYER -> {
-                sql.replace("%from%", from)
+                from
             }
             MailSenderType.SERVER -> {
-                sql.replace("%from%", "&SERVER")
+                "&SERVER"
             }
             MailSenderType.CUSTOM -> {
-                sql.replace("%from%", "#${from}")
+                "#${from}"
             }
         }
-        return sql
     }
 
 }

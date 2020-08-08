@@ -25,7 +25,7 @@ object MailNoticeSetting {
     fun saveList() {
         var listString = "";
         for (uuid in noticeList) {
-            listString = "${listString}${uuid},"
+            listString += "$uuid,"
         }
         plugin.config.set("notice", listString)
         plugin.saveConfig()

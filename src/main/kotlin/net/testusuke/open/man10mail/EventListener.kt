@@ -61,12 +61,6 @@ object EventListener : Listener {
      * @return id[Int]
      */
     private fun checkMailID(item: ItemStack): Int {
-        var id: Int?
-        val meta = item.itemMeta ?: return -1
-        val lore = meta.lore ?: return -1
-        val lastIndex = lore.size - 1
-        id = lore[lastIndex].toIntOrNull()
-        if (id == null) return -1
-        return id
+        return MailUtil.getMailID(item)
     }
 }
