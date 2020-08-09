@@ -57,14 +57,28 @@ object MailUtil {
      */
     fun sendMailMessage(player:Player,msg:String){
         val messages = msg.split(";")
+        var i = 0
         for (m in messages) {
+            if(i == 0){
+                player.sendMessage(m.substring(1).replace("&","§"))
+                i++
+                continue
+            }
             player.sendMessage(m.replace("&","§"))
+            i++
         }
     }
     fun sendMailMessage(sender:CommandSender,msg:String){
         val messages = msg.split(";")
+        var i = 0
         for (m in messages) {
+            if(i == 0){
+                sender.sendMessage(m.substring(1).replace("&","§"))
+                i++
+                continue
+            }
             sender.sendMessage(m.replace("&","§"))
+            i++
         }
     }
 
