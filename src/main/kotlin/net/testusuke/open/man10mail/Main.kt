@@ -47,12 +47,12 @@ class Main : JavaPlugin() {
     }
 
     override fun onDisable() {
-
         //  save
         MailNoticeSetting.saveList()
-
         //  enable
         config.set("enable", enable)
         this.saveConfig()
+        //  DB
+        dataBase.connection?.close()
     }
 }

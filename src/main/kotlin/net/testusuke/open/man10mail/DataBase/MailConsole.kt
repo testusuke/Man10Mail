@@ -1,9 +1,11 @@
 package net.testusuke.open.man10mail.DataBase
 
+import net.testusuke.open.man10mail.MailNoticeSetting
 import net.testusuke.open.man10mail.MailUtil
 import net.testusuke.open.man10mail.Main.Companion.plugin
 import net.testusuke.open.man10mail.Main.Companion.prefix
 import org.bukkit.Bukkit
+import org.bukkit.entity.Player
 import java.sql.Statement
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
@@ -47,8 +49,10 @@ object MailConsole {
         statement.close()
 
         //  サーバー内にユーザーがいる場合は通知
-        Bukkit.getPlayer(UUID.fromString(to))?.sendMessage("${prefix}§6新しいメールが届いています。")
-
+        val player = Bukkit.getPlayer(UUID.fromString(to))
+        if(player != null) {
+            if (MailNoticeSetting.isEnableNotice(player)) player.sendMessage("${prefix}§6新しいメールが届いています。")
+        }
         return MailResult.Success(id)
     }
 
@@ -86,7 +90,7 @@ object MailConsole {
         for (player in Bukkit.getOnlinePlayers()) {
             val uuid = player.uniqueId.toString()
             sendEveryoneMail(uuid)
-            player.sendMessage("${prefix}§6新しいメールが届いています。")
+            if(MailNoticeSetting.isEnableNotice(player)) player.sendMessage("${prefix}§6新しいメールが届いています。")
         }
 
         return MailResult.Success(id)
@@ -191,6 +195,66 @@ object MailConsole {
         result.close()
         statement.close()
         return MailInformation(id, from, to, title, message, tag)
+    }
+
+    /**
+     * function of remove old mail
+     * @param uuid[String] uuid
+     */
+    fun removeOldMail(uuid: String){
+        plugin.dataBase.open()
+        val connection = plugin.dataBase.connection
+        if (connection == null) {
+            plugin.dataBase.sendErrorMessage()
+            return
+        }
+        val sql = "SELECT id FROM mail_list where to_player='${uuid}' ORDER BY id asc LIMIT 54,30;"
+        val statement = connection.createStatement()
+        val result = statement.executeQuery(sql)
+        val removeStatement = connection.createStatement()
+        var amount = 0
+        while (result.next()){
+            val id = result.getInt("id")
+            val removeSql = "DELETE FROM mail_list WHERE id='${id}';"
+            removeStatement.executeUpdate(removeSql)
+            amount ++
+        }
+        result.close()
+        statement.close()
+        removeStatement.close()
+        //  Logger
+        plugin.logger.info("delete $amount mails. uuid:$uuid")
+    }
+
+    /**
+     * function of send no-read mail's amount
+     * @param player[Player] player
+     */
+    fun sendNotReadMail(player: Player){
+        plugin.dataBase.open()
+        val connection = plugin.dataBase.connection
+        if (connection == null) {
+            plugin.dataBase.sendErrorMessage()
+            return
+        }
+        val sql = "SELECT id,`read` FROM mail_list where to_player='${player.uniqueId.toString()}';"
+        val statement = connection.createStatement()
+        val result = statement.executeQuery(sql)
+        var amount = 0
+        while (result.next()){
+            if(!result.getBoolean("read")){
+                amount++
+            }
+        }
+        //  0
+        if(amount == 0){
+            player.sendMessage("${prefix}§6未読メールはありません。")
+        }else{
+            player.sendMessage("${prefix}§d${amount}件§6の未読メールはあります。")
+        }
+
+        result.close()
+        statement.close()
     }
 
     private fun formatFromUser(from: String, senderType: MailSenderType): String {

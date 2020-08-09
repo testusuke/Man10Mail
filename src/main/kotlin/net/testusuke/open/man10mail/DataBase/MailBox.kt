@@ -23,9 +23,10 @@ object MailBox {
      * @return
      */
     fun openMailBox(player: Player) {
+        //  REMOVE
+        MailConsole.removeOldMail(player.uniqueId.toString())
+
         val inventory = Bukkit.createInventory(null, 54, INVENTORY_TITLE)
-        //  Message
-        player.sendMessage("${prefix}§a§lデータベースに問い合わせています。少々お待ちください。please wait.query a database.")
         //  DB問い合わせ
         val sql = "SELECT * FROM mail_list WHERE to_player='${player.uniqueId}' ORDER BY `date` desc LIMIT 54;"
         plugin.dataBase.open()
@@ -59,8 +60,6 @@ object MailBox {
     }
 
     fun showMail(player: Player, mailID: Int) {
-        //  Message
-        player.sendMessage("${prefix}§a§lデータベースに問い合わせています。少々お待ちください。Please wait.Query a database.")
         //  DB
         val sql = "SELECT * FROM mail_list WHERE to_player='${player.uniqueId}' AND id='${mailID}' LIMIT 1;"
         plugin.dataBase.open()
@@ -76,8 +75,8 @@ object MailBox {
         resultSet.next()
         val tag = MailUtil.formatTag(resultSet.getString("tag"))
 
-        player.sendMessage("§6タイトル(title): ${resultSet.getString("title")}")
-        player.sendMessage("§6タグ(tag): ${MailUtil.formatTag(tag)}")
+        player.sendMessage("§6タイトル(title): ${resultSet.getString("title").replace("&","§")}")
+        player.sendMessage("§6タグ(tag): ${MailUtil.formatTag(tag).replace("&","§")}")
         player.sendMessage("§6メッセージ(message):")
         MailUtil.sendMailMessage(player,resultSet.getString("message"))
         player.sendMessage("§6送信元(from): ${formatFromUser(resultSet.getString("from_player"))}")
@@ -121,10 +120,10 @@ object MailBox {
     private fun createMailItem(from: String, title: String, tag: String, date: String,message:String, read: Boolean, id: Int): ItemStack {
         val itemStack = ItemStack(Material.PAPER)
         val meta = itemStack.itemMeta
-        meta.setDisplayName("§d件名(title): $title")
+        meta.setDisplayName("§d件名(title): ${title.replace("&","§")}")
         val lore = ArrayList<String>()
         lore.add("§6送信元(from): $from")
-        lore.add("§6タグ(tag): $tag")
+        lore.add("§6タグ(tag): ${tag.replace("&","§")}")
         lore.add("§6メッセージ(msg): ${getFirstLine(message)}")
         lore.add("§6日付(date): $date")
         if (read) {

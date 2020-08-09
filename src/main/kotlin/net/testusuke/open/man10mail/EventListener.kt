@@ -50,6 +50,8 @@ object EventListener : Listener {
         object : BukkitRunnable(){
             override fun run() {
                 MailConsole.sendEveryoneMail(player.uniqueId.toString())
+                MailConsole.removeOldMail(player.uniqueId.toString())
+                MailConsole.sendNotReadMail(player)
             }
         }.runTask(plugin)
 

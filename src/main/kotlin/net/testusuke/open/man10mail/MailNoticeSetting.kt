@@ -17,15 +17,21 @@ object MailNoticeSetting {
         val listString = plugin.config.getString("notice").toString()
         val listArgs = listString.split(",")
         for (uuid in listArgs) {
+            if(uuid == "")continue
             noticeList.add(uuid)
         }
         plugin.logger.info("load notice data ${noticeList.size} players.")
     }
 
     fun saveList() {
-        var listString = "";
+        var listString = ""
         for (uuid in noticeList) {
-            listString += "$uuid,"
+            if(uuid == "") continue
+            if(listString == ""){
+                listString += uuid
+                continue
+            }
+            listString += ",$uuid"
         }
         plugin.config.set("notice", listString)
         plugin.saveConfig()
@@ -44,10 +50,6 @@ object MailNoticeSetting {
 
     fun isEnableNotice(player: Player): Boolean {
         return noticeList.contains(player.uniqueId.toString())
-    }
-
-    fun clear() {
-        noticeList.clear()
     }
 
     fun smartModeChange(player: Player) {

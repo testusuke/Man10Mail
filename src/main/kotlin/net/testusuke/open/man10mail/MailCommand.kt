@@ -31,6 +31,10 @@ object MailCommand : CommandExecutor {
                     sendDisable(sender)
                     return false
                 }
+                if (!sender.hasPermission(Permission.OPEN_MAIL_BOX)) {
+                    sendPermissionError(sender)
+                    return false
+                }
                 sender.sendMessage("${prefix}§aメールボックスを開きます。")
                 object : BukkitRunnable(){
                     override fun run() {
@@ -60,6 +64,10 @@ object MailCommand : CommandExecutor {
             }
             "send" -> {
                 if (sender !is Player) return false
+                if (!sender.hasPermission(Permission.SEND_MAIL)) {
+                    sendPermissionError(sender)
+                    return false
+                }
                 if (!enable) {
                     sendDisable(sender)
                     return false
@@ -87,7 +95,6 @@ object MailCommand : CommandExecutor {
                     sender.sendMessage("${prefix}§cメッセージを入力してください。please enter message.")
                     return false
                 }
-                sender.sendMessage("${prefix}§6メール送信手続きをしています。please wait.try send mail.")
                 object : BukkitRunnable() {
                     override fun run() {
                         val message = formatMessage(args, 3)
@@ -98,13 +105,16 @@ object MailCommand : CommandExecutor {
 
                             sender.sendMessage("${prefix}§aメールを送信します。")
                             sender.sendMessage("§6メール番号: $mailID")
+                            sender.sendMessage("§6タイトル(title): ${title.replace("&","§")}")
+                            /*
                             sender.sendMessage("§6メール本文:")
                             MailUtil.sendMailMessage(sender,message)
+                             */
 
                         } else if (result is MailResult.Error) {
                             when (result.reason) {
                                 MailErrorReason.CAN_NOT_ACCESS_DB -> {
-                                    sender.sendMessage("${prefix}§cデータベースへの問い合わせに失敗しました。")
+                                    sender.sendMessage("${prefix}§c失敗しました。")
                                     cancel()
                                 }
                             }
@@ -158,12 +168,16 @@ object MailCommand : CommandExecutor {
 
                                 sender.sendMessage("${prefix}§aメールを送信します。")
                                 sender.sendMessage("§6メール番号: $mailID")
+                                sender.sendMessage("§6タイトル(title): ${title.replace("&","§")}")
+                                /*
                                 sender.sendMessage("§6メール本文:")
                                 MailUtil.sendMailMessage(sender,message)
+                                 */
+
                             } else if (result is MailResult.Error) {
                                 when (result.reason) {
                                     MailErrorReason.CAN_NOT_ACCESS_DB -> {
-                                        sender.sendMessage("${prefix}§cデータベースへの問い合わせに失敗しました。")
+                                        sender.sendMessage("${prefix}§c失敗しました。")
                                         cancel()
                                     }
                                 }
@@ -200,12 +214,16 @@ object MailCommand : CommandExecutor {
 
                                 sender.sendMessage("${prefix}§aメールを送信します。")
                                 sender.sendMessage("§6メール番号: $mailID")
+                                sender.sendMessage("§6タイトル(title): ${title.replace("&","§")}")
+                                /*
                                 sender.sendMessage("§6メール本文:")
                                 MailUtil.sendMailMessage(sender,message)
+                                 */
+
                             } else if (result is MailResult.Error) {
                                 when (result.reason) {
                                     MailErrorReason.CAN_NOT_ACCESS_DB -> {
-                                        sender.sendMessage("${prefix}§cデータベースへの問い合わせに失敗しました。")
+                                        sender.sendMessage("${prefix}§c失敗しました。")
                                         cancel()
                                     }
                                 }
@@ -234,7 +252,6 @@ object MailCommand : CommandExecutor {
                     sender.sendMessage("${prefix}§cメッセージを入力してください。please enter message.")
                     return false
                 }
-                sender.sendMessage("${prefix}§6メール送信手続きをしています。please wait.try send mail.")
                 object : BukkitRunnable() {
                     override fun run() {
                         val message = formatMessage(args, 3)
@@ -245,12 +262,16 @@ object MailCommand : CommandExecutor {
 
                             sender.sendMessage("${prefix}§aメールを送信します。")
                             sender.sendMessage("§6メール番号: $mailID")
+                            sender.sendMessage("§6タイトル(title): ${title.replace("&","§")}")
+                            /*
                             sender.sendMessage("§6メール本文:")
                             MailUtil.sendMailMessage(sender,message)
+                             */
+
                         } else if (result is MailResult.Error) {
                             when (result.reason) {
                                 MailErrorReason.CAN_NOT_ACCESS_DB -> {
-                                    sender.sendMessage("${prefix}§cデータベースへの問い合わせに失敗しました。")
+                                    sender.sendMessage("${prefix}§c失敗しました。")
                                     cancel()
                                 }
                             }
@@ -327,19 +348,19 @@ object MailCommand : CommandExecutor {
 
     private fun sendHelp(sender: CommandSender) {
         val msg = """
-            §e§l===============================
-            §6/mmail -> メールボックスを開きます。
-            §6/mmail help -> ヘルプを表示します。
-            §6/mmail send <player> <title> <message> <- メールを送信します。メッセージの改行は[;]を入力してください。
-            §6/mmail notice <- 通知を有効/無効にします。
-            §cAdmin Commands
-            §c/mmail send-tag/send-all/remove these command can use on the console.
-            §c/mmail send-tag <player> <title> <tag> <message> <- タグ付きでメッセージを送信します。tag 0<-normal 5<-notice 6<-information etc...
-            §c/mmail send-tag <from> <player> <title> <tag> <message> <- 発信元を指定 §c§l※プレイヤーからの実行はできません。
-            §c/mmail send-all <title> <tag> <message> <- 全体メッセージを送信します。
-            §c/mmail on/off <- プラグインを有効化/無効化します。
-            §d§dCreated by testusuke
-            §e§l===============================
+            §e§l====================================
+            §6§l/mmail -> メールボックスを開きます。
+            §6§l/mmail help -> ヘルプを表示します。
+            §6§l/mmail send <player> <title> <message> <- メールを送信します。メッセージの改行は[;]を入力してください。
+            §6§l/mmail notice <- 通知を有効/無効にします。
+            §c§lAdmin Commands
+            §c§l/mmail send-tag/send-all/remove these command can use on the console.
+            §c§l/mmail send-tag <player> <title> <tag> <message> <- タグ付きでメッセージを送信します。tag 0<-normal 5<-notice 6<-information etc...
+            §c§l/mmail send-tag <from> <player> <title> <tag> <message> <- 発信元を指定 §c§l※プレイヤーからの実行はできません。
+            §c§l/mmail send-all <title> <tag> <message> <- 全体メッセージを送信します。
+            §c§l/mmail on/off <- プラグインを有効化/無効化します。
+            §d§lCreated by testusuke
+            §e§l====================================
         """.trimIndent()
         sender.sendMessage(msg)
     }
