@@ -329,7 +329,7 @@ object MailCommand : CommandExecutor {
         if (enable == mode) {
             sender.sendMessage("${prefix}§cすでに§e${mode}§cになっています。")
         } else {
-            enable = true
+            enable = mode
             sender.sendMessage("${prefix}§aプラグインが§e${mode}§aになりました。")
         }
     }
