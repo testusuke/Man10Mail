@@ -208,7 +208,7 @@ object MailConsole {
             plugin.dataBase.sendErrorMessage()
             return
         }
-        val sql = "SELECT id FROM mail_list where to_player='${uuid}' ORDER BY id asc LIMIT 54,30;"
+        val sql = "SELECT id FROM mail_list where to_player='${uuid}' ORDER BY id desc LIMIT 54,30;"
         val statement = connection.createStatement()
         val result = statement.executeQuery(sql)
         val removeStatement = connection.createStatement()
@@ -250,7 +250,7 @@ object MailConsole {
         if(amount == 0){
             player.sendMessage("${prefix}§6未読メールはありません。")
         }else{
-            player.sendMessage("${prefix}§d${amount}件§6の未読メールはあります。")
+            player.sendMessage("${prefix}§d${amount}件§6の未読メールがあります。")
         }
 
         result.close()
