@@ -6,6 +6,7 @@ import net.testusuke.open.man10mail.Main.Companion.plugin
 import net.testusuke.open.man10mail.Main.Companion.prefix
 import org.bukkit.Bukkit
 import org.bukkit.ChatColor
+import org.bukkit.OfflinePlayer
 import org.bukkit.command.Command
 import org.bukkit.command.CommandExecutor
 import org.bukkit.command.CommandSender
@@ -80,7 +81,7 @@ object MailCommand : CommandExecutor {
                 val id = args[1]
                 val targetPlayer = Bukkit.getOfflinePlayer(id)
                 val uuid = targetPlayer.uniqueId.toString()
-                if (uuid.isEmpty()) {
+                if (!existPlayer(targetPlayer)) {
                     sender.sendMessage("${prefix}§cプレイヤー情報を取得できませんでした。could not get player info.")
                     return false
                 }
@@ -136,7 +137,7 @@ object MailCommand : CommandExecutor {
                     val id = args[1]
                     val targetPlayer = Bukkit.getOfflinePlayer(id)
                     val uuid = targetPlayer.uniqueId.toString()
-                    if (uuid.isEmpty()) {
+                    if (!existPlayer(targetPlayer)) {
                         sender.sendMessage("${prefix}§cプレイヤー情報を取得できませんでした。could not get player info.")
                         return false
                     }
@@ -193,7 +194,7 @@ object MailCommand : CommandExecutor {
                     val id = args[2]
                     val targetPlayer = Bukkit.getOfflinePlayer(id)
                     val uuid = targetPlayer.uniqueId.toString()
-                    if (uuid.isEmpty()) return false
+                    if (!existPlayer(targetPlayer)) return false
                     //  Title
                     if (args.size < 4) return false
                     val title = args[3]
@@ -380,6 +381,11 @@ object MailCommand : CommandExecutor {
             }
         }
         return formatted
+    }
+
+    //  Player Exist
+    fun existPlayer(player: OfflinePlayer):Boolean {
+        return player.hasPlayedBefore()
     }
 
 }
