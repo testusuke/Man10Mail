@@ -6,4 +6,6 @@ database:
   db: "database"
 # If you wanna use colour code,you should use [ & ].
 prefix: "&e[&dMan10&aMail&e]&f"
+# CoolTime(second)
+cooltime: 10
 enable:

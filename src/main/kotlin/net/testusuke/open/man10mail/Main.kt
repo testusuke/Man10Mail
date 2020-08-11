@@ -24,7 +24,6 @@ class Main : JavaPlugin() {
     override fun onEnable() {
         //  instance
         plugin = this
-        //  Logger
 
         //  Config
         this.saveDefaultConfig()
@@ -36,6 +35,8 @@ class Main : JavaPlugin() {
         server.pluginManager.registerEvents(EventListener, this)
         //  NoticeData
         MailNoticeSetting.loadList()
+        //  CoolTime
+        CoolTime.prepare()
 
         //  Prefix
         try {

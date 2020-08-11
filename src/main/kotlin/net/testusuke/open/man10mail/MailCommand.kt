@@ -73,6 +73,13 @@ object MailCommand : CommandExecutor {
                     sendDisable(sender)
                     return false
                 }
+                //  CoolTime
+                if(CoolTime.isCoolDown(sender.uniqueId.toString())){
+                    if (!sender.hasPermission(Permission.ADMIN)) {
+                        sender.sendMessage("${prefix}§c§lクールダウン中です。")
+                        return false
+                    }
+                }
                 //  args size
                 if (args.size < 2) {
                     sender.sendMessage("${prefix}§c送信先を指定してください。please enter player name or uuid. /mmail send <player> <title> <message> [tag]")
@@ -96,6 +103,9 @@ object MailCommand : CommandExecutor {
                     sender.sendMessage("${prefix}§cメッセージを入力してください。please enter message.")
                     return false
                 }
+                //  CoolDown
+                CoolTime.start(sender.uniqueId.toString())
+
                 object : BukkitRunnable() {
                     override fun run() {
                         val message = formatMessage(args, 3)
@@ -288,6 +298,13 @@ object MailCommand : CommandExecutor {
                 changeEnable(sender, false)
             }
 
+            "reload" -> {
+                if(sender.hasPermission(Permission.ADMIN)){
+                    plugin.reloadConfig()
+                    sender.sendMessage("${prefix}§a読み込みました。")
+                    CoolTime.prepare()
+                }
+            }
             /* §c/mmail remove <mail-id> <- 指定したIDのメールを削除します。
             "remove" -> {
                 if(sender is Player){
@@ -384,7 +401,7 @@ object MailCommand : CommandExecutor {
     }
 
     //  Player Exist
-    fun existPlayer(player: OfflinePlayer):Boolean {
+    private fun existPlayer(player: OfflinePlayer):Boolean {
         return player.hasPlayedBefore()
     }
 
