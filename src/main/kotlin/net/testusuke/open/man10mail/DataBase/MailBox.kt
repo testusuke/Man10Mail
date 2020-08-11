@@ -5,6 +5,7 @@ import net.testusuke.open.man10mail.Main.Companion.plugin
 import net.testusuke.open.man10mail.Main.Companion.prefix
 import org.bukkit.Bukkit
 import org.bukkit.Material
+import org.bukkit.enchantments.Enchantment
 import org.bukkit.entity.Player
 import org.bukkit.inventory.ItemStack
 import java.util.*
@@ -48,7 +49,8 @@ object MailBox {
             val date = resultSet.getString("date")
             val read = resultSet.getBoolean("read")
             val id = resultSet.getInt("id")
-            val item = createMailItem(from, title, MailUtil.formatTag(tag), date,message, read, id)
+            val tagType = MailUtil.getTagType(resultSet.getString("tag"))
+            val item = createMailItem(from, title, MailUtil.formatTag(tag), date,message, read, id, tagType)
             inventory.setItem(index, item)
             index++
         }
@@ -117,7 +119,7 @@ object MailBox {
         }
     }
 
-    private fun createMailItem(from: String, title: String, tag: String, date: String,message:String, read: Boolean, id: Int): ItemStack {
+    private fun createMailItem(from: String, title: String, tag: String, date: String,message:String, read: Boolean, id: Int,tagType:MailUtil.TagType): ItemStack {
         val itemStack = ItemStack(Material.PAPER)
         val meta = itemStack.itemMeta
         meta.setDisplayName("§d件名(title): ${title.replace("&","§")}")
@@ -132,6 +134,12 @@ object MailBox {
             lore.add("§6既読(read): §c×")
         }
         meta.lore = lore
+        //  Enchantment
+        when(tagType){
+            MailUtil.TagType.INFORMATION -> {
+                meta.addEnchant(Enchantment.DURABILITY,1,false)
+            }
+        }
         itemStack.itemMeta = meta
         //  Mail ID
         return MailUtil.setMailID(id,itemStack)

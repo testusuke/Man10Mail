@@ -1,5 +1,6 @@
 package net.testusuke.open.man10mail
 
+import net.testusuke.open.man10mail.DataBase.MailSenderType
 import net.testusuke.open.man10mail.Main.Companion.plugin
 import org.bukkit.NamespacedKey
 import org.bukkit.command.CommandSender
@@ -52,6 +53,23 @@ object MailUtil {
         }
     }
 
+    enum class TagType{NORMAL,NOTICE,INFORMATION,CUSTOM}
+    fun getTagType(tag: String): TagType {
+        return when (tag) {
+            "normal" -> {    //  normal = 0
+                TagType.NORMAL
+            }
+            "#5" -> {    //  notice=5
+                TagType.NOTICE
+            }
+            "#6" -> {    //  information=6
+                TagType.INFORMATION
+            }
+            else -> {   //  normal=else
+                TagType.CUSTOM
+            }
+        }
+    }
     /**
      * send message
      */
