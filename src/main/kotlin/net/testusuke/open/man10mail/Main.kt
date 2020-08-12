@@ -24,7 +24,6 @@ class Main : JavaPlugin() {
     override fun onEnable() {
         //  instance
         plugin = this
-
         //  Config
         this.saveDefaultConfig()
         //  DB
@@ -33,6 +32,8 @@ class Main : JavaPlugin() {
         getCommand("mmail")?.setExecutor(MailCommand)
         //  Event
         server.pluginManager.registerEvents(EventListener, this)
+        //  Vault
+        VaultManager.setup()
         //  NoticeData
         MailNoticeSetting.loadList()
         //  CoolTime
