@@ -80,6 +80,14 @@ object MailCommand : CommandExecutor {
                         return false
                     }
                 }
+                //  Vault
+                val money = VaultManager.economy?.getBalance(sender)
+                if (money != null) {
+                    if(!sender.hasPermission(Permission.ADMIN) && money < plugin.MONEY_SEND_MAIL.toDouble()){
+                        sender.sendMessage("${prefix}§cメール送信の必要料金を持っていません。必要料金: ${plugin.MONEY_SEND_MAIL}")
+                        return false
+                    }
+                }
                 //  args size
                 if (args.size < 2) {
                     sender.sendMessage("${prefix}§c送信先を指定してください。please enter player name or uuid. /mmail send <player> <title> <message> [tag]")
