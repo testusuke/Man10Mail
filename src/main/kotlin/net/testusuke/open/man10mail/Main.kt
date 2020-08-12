@@ -21,6 +21,16 @@ class Main : JavaPlugin() {
     //  DB
     lateinit var dataBase: DataBase
 
+    //  money of send mail
+    val MONEY_SEND_MAIL:Int by lazy {
+        try {
+            config.getInt("money")
+        }catch (e:Exception){
+            logger.warning("can't get money of send mail.check configuration.")
+            0
+        }
+    }
+
     override fun onEnable() {
         //  instance
         plugin = this

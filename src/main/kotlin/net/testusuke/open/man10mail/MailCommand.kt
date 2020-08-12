@@ -105,7 +105,10 @@ object MailCommand : CommandExecutor {
                 }
                 //  CoolDown
                 CoolTime.start(sender.uniqueId.toString())
-
+                //  Vault
+                if(!sender.hasPermission(Permission.ADMIN) && plugin.MONEY_SEND_MAIL != 0) {
+                    VaultManager.economy?.withdrawPlayer(sender, plugin.MONEY_SEND_MAIL.toDouble())
+                }
                 object : BukkitRunnable() {
                     override fun run() {
                         val message = formatMessage(args, 3)
@@ -123,6 +126,11 @@ object MailCommand : CommandExecutor {
                              */
 
                         } else if (result is MailResult.Error) {
+                            //  Vault 返金
+                            //  Vault
+                            if(!sender.hasPermission(Permission.ADMIN) && plugin.MONEY_SEND_MAIL != 0) {
+                                VaultManager.economy?.depositPlayer(sender, plugin.MONEY_SEND_MAIL.toDouble())
+                            }
                             when (result.reason) {
                                 MailErrorReason.CAN_NOT_ACCESS_DB -> {
                                     sender.sendMessage("${prefix}§c失敗しました。")

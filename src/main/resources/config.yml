@@ -8,4 +8,5 @@ database:
 prefix: "&e[&dMan10&aMail&e]&f"
 # CoolTime(second)
 cooltime: 10
+money: 1000
 enable:
