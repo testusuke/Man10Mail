@@ -5,7 +5,9 @@ import net.testusuke.open.man10mail.MailUtil
 import net.testusuke.open.man10mail.Main.Companion.plugin
 import net.testusuke.open.man10mail.Main.Companion.prefix
 import org.bukkit.Bukkit
+import org.bukkit.OfflinePlayer
 import org.bukkit.entity.Player
+import java.lang.Exception
 import java.sql.Statement
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
@@ -32,7 +34,7 @@ object MailConsole {
         val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
         val formatted = current.format(formatter)
         val formattedFrom = formatFromUser(from,senderType)
-        var sql = "INSERT INTO mail_list (to_player,from_player,title,message,tag,date) VALUES('${to}','$formattedFrom','${title}','${message}','${MailUtil.convertTag(tag)}','${formatted}');"
+        var sql = "INSERT INTO mail_list (to_player,to_name,from_player,to_name,title,message,tag,date) VALUES('${to}','${getPlayerName(to)}','$formattedFrom','${getPlayerName(from)}','${title}','${message}','${MailUtil.convertTag(tag)}','${formatted}');"
         plugin.dataBase.open()
         val connection = plugin.dataBase.connection
         if (connection == null) {
@@ -134,7 +136,7 @@ object MailConsole {
                 val tag = selectAllResult.getString("tag")
                 val message = selectAllResult.getString("message")
                 val date = selectAllResult.getString("date")
-                val insertMailSQL = "INSERT INTO mail_list (to_player,from_player,title,message,tag,date) VALUES('${uuid}','${from}','${title}','${message}','${MailUtil.convertTag(tag)}','${date}');"
+                val insertMailSQL = "INSERT INTO mail_list (to_player,to_name,from_player,from_name,title,message,tag,date) VALUES('${uuid}','${getPlayerName(uuid)}','${from}','${getPlayerName(from)}','${title}','${message}','${MailUtil.convertTag(tag)}','${date}');"
                 insertMailStatement.executeUpdate(escapeWildcardsForMySQL(insertMailSQL))
 
                 val insertMailReadSQL = "INSERT INTO mail_read (to_player,from_mail_id) VALUES ('${uuid}','${selectAllResult.getInt("id")}');"
@@ -290,6 +292,22 @@ object MailConsole {
         return escapeStringForMySQL(s)
             .replace("%", "\\%")
             .replace("_", "\\_")
+    }
+
+    //  Player Exist
+    private fun existPlayer(player: OfflinePlayer):Boolean {
+        return player.hasPlayedBefore()
+    }
+
+    private fun getPlayerName(str:String):String {
+        try {
+            val uuid = UUID.fromString(str)
+            val player = Bukkit.getServer().getOfflinePlayer(uuid)
+            if(!existPlayer(player)) return "none"
+            return player.name!! // <- if player has login before,mcid must not be null.
+        }catch (e:Exception) {
+            return "none"
+        }
     }
 
 }
