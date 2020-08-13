@@ -41,7 +41,7 @@ object MailConsole {
         }
         val statement = connection.createStatement()
 
-        statement.executeUpdate(sql, Statement.RETURN_GENERATED_KEYS)
+        statement.executeUpdate(escapeWildcardsForMySQL(sql), Statement.RETURN_GENERATED_KEYS)
         val resultSet = statement.generatedKeys
         resultSet.next()
         val id = resultSet.getInt(1)
@@ -77,7 +77,7 @@ object MailConsole {
         }
         val statement = connection.createStatement()
 
-        statement.executeUpdate(sql, Statement.RETURN_GENERATED_KEYS)
+        statement.executeUpdate(escapeWildcardsForMySQL(sql), Statement.RETURN_GENERATED_KEYS)
         val resultSet = statement.generatedKeys
         resultSet.next()
         val id = resultSet.getInt(1)
@@ -110,7 +110,7 @@ object MailConsole {
         }
         val selectReadSQL = "SELECT from_mail_id FROM mail_read WHERE to_player='${uuid}';"
         val selectReadStatement = connection.createStatement()
-        val selectReadResult = selectReadStatement.executeQuery(selectReadSQL)
+        val selectReadResult = selectReadStatement.executeQuery(escapeWildcardsForMySQL(selectReadSQL))
         //  送信済みのMail ID
         val readMailList = mutableListOf<Int>()
         while (selectReadResult.next()) {
@@ -123,7 +123,7 @@ object MailConsole {
         //  Mail All Table
         val selectAllSQL = "SELECT * FROM mail_all;"
         val selectAllStatement = connection.createStatement()
-        val selectAllResult = selectAllStatement.executeQuery(selectAllSQL)
+        val selectAllResult = selectAllStatement.executeQuery(escapeWildcardsForMySQL(selectAllSQL))
         //  create statement
         val insertMailStatement = connection.createStatement()
         var amount = 0
@@ -135,10 +135,10 @@ object MailConsole {
                 val message = selectAllResult.getString("message")
                 val date = selectAllResult.getString("date")
                 val insertMailSQL = "INSERT INTO mail_list (to_player,from_player,title,message,tag,date) VALUES('${uuid}','${from}','${title}','${message}','${MailUtil.convertTag(tag)}','${date}');"
-                insertMailStatement.executeUpdate(insertMailSQL)
+                insertMailStatement.executeUpdate(escapeWildcardsForMySQL(insertMailSQL))
 
                 val insertMailReadSQL = "INSERT INTO mail_read (to_player,from_mail_id) VALUES ('${uuid}','${selectAllResult.getInt("id")}');"
-                insertMailStatement.executeUpdate(insertMailReadSQL)
+                insertMailStatement.executeUpdate(escapeWildcardsForMySQL(insertMailReadSQL))
                 amount++
             }
         }
@@ -163,7 +163,7 @@ object MailConsole {
         }
         val sql = "DELETE FROM mail_all WHERE id='$id';"
         val statement = connection.createStatement()
-        statement.executeUpdate(sql)
+        statement.executeUpdate(escapeWildcardsForMySQL(sql))
         statement.close()
         return true
     }
@@ -184,7 +184,7 @@ object MailConsole {
         }
         val sql = "SELECT * FROM mail_list WHERE id='$id' LIMIT 1;"
         val statement = connection.createStatement()
-        val result = statement.executeQuery(sql)
+        val result = statement.executeQuery(escapeWildcardsForMySQL(sql))
         result.next()
         val from = result.getString("from_player")
         val to = result.getString("to_player")
@@ -210,13 +210,13 @@ object MailConsole {
         }
         val sql = "SELECT id FROM mail_list where to_player='${uuid}' ORDER BY id desc LIMIT 54,30;"
         val statement = connection.createStatement()
-        val result = statement.executeQuery(sql)
+        val result = statement.executeQuery(escapeWildcardsForMySQL(sql))
         val removeStatement = connection.createStatement()
         var amount = 0
         while (result.next()){
             val id = result.getInt("id")
             val removeSql = "DELETE FROM mail_list WHERE id='${id}';"
-            removeStatement.executeUpdate(removeSql)
+            removeStatement.executeUpdate(escapeWildcardsForMySQL(removeSql))
             amount ++
         }
         result.close()
@@ -239,7 +239,7 @@ object MailConsole {
         }
         val sql = "SELECT id,`read` FROM mail_list where to_player='${player.uniqueId.toString()}';"
         val statement = connection.createStatement()
-        val result = statement.executeQuery(sql)
+        val result = statement.executeQuery(escapeWildcardsForMySQL(sql))
         var amount = 0
         while (result.next()){
             if(!result.getBoolean("read")){
@@ -269,6 +269,27 @@ object MailConsole {
                 "#${from}"
             }
         }
+    }
+
+    /**
+     * MySQL String エスケープ
+     */
+    private fun escapeStringForMySQL(s: String): String {
+        return s.replace("\\", "\\\\")
+            .replace("\b", "\\b")
+            .replace("\n", "\\n")
+            .replace("\r", "\\r")
+            .replace("\t", "\\t")
+            .replace("\\x1A", "\\Z")
+            .replace("\\x00", "\\0")
+            .replace("'", "\\'")
+            .replace("\"", "\\\"")
+    }
+
+    private fun escapeWildcardsForMySQL(s: String): String {
+        return escapeStringForMySQL(s)
+            .replace("%", "\\%")
+            .replace("_", "\\_")
     }
 
 }

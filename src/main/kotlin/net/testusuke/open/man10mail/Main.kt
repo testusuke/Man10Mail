@@ -1,6 +1,7 @@
 package net.testusuke.open.man10mail
 
 import net.testusuke.open.man10mail.DataBase.DataBase
+import org.apache.commons.lang.StringEscapeUtils
 import org.bukkit.plugin.java.JavaPlugin
 import java.lang.NullPointerException
 
@@ -56,6 +57,7 @@ class Main : JavaPlugin() {
         } catch (e: NullPointerException) {
             logger.info("can not load config.")
         }
+
     }
 
     override fun onDisable() {
