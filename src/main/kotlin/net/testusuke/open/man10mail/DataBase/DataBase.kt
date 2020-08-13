@@ -3,6 +3,7 @@ package net.testusuke.open.man10mail.DataBase
 import net.testusuke.open.man10mail.Main.Companion.plugin
 import java.sql.Connection
 import java.sql.DriverManager
+import java.sql.ResultSet
 import java.sql.SQLException
 
 /**
@@ -77,6 +78,21 @@ class DataBase(private val prefix: String) {
         }
         plugin.logger.info("接続に成功しました！")
         return true
+    }
+
+    //  カラム数
+    fun countColumn(result:ResultSet):Int{
+        var c = 0
+        if(result.isClosed)return 0
+        return try {
+            while (result.next()){
+                c++
+            }
+            c
+        }catch (e:Exception){
+            e.printStackTrace()
+            c
+        }
     }
 
     fun sendErrorMessage() {
