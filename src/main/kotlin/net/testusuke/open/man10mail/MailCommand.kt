@@ -142,7 +142,9 @@ object MailCommand : CommandExecutor {
                             when (result.reason) {
                                 MailErrorReason.CAN_NOT_ACCESS_DB -> {
                                     sender.sendMessage("${prefix}§c失敗しました。")
-                                    cancel()
+                                }
+                                MailErrorReason.BLOCKED -> {
+                                    sender.sendMessage("${prefix}§c送信先にブロックされています。")
                                 }
                             }
                         }
@@ -321,6 +323,58 @@ object MailCommand : CommandExecutor {
                     CoolTime.prepare()
                 }
             }
+
+            "block" -> {
+                if(sender !is Player)return false
+                if(!sender.hasPermission(Permission.OPEN_MAIL_BOX)){
+                    sendPermissionError(sender)
+                    return false
+                }
+                if (args.size < 2) {
+                    sender.sendMessage("${prefix}§cプレイヤーを指定しください。")
+                    return false
+                }
+                val id = args[1]
+                val targetPlayer = Bukkit.getOfflinePlayer(id)
+                val uuid = targetPlayer.uniqueId.toString()
+                if (!existPlayer(targetPlayer)) {
+                    sender.sendMessage("${prefix}§cプレイヤー情報を取得できませんでした。could not get player info.")
+                    return false
+                }
+                sender.sendMessage("${prefix}§aプレイヤーをブロックします。")
+                object : BukkitRunnable(){
+                    override fun run() {
+                        MailConsole.blockUser(uuid,sender.uniqueId.toString())
+                    }
+                }.runTask(plugin)
+
+            }
+
+            "unblock" -> {
+                if(sender !is Player)return false
+                if(!sender.hasPermission(Permission.OPEN_MAIL_BOX)){
+                    sendPermissionError(sender)
+                    return false
+                }
+                if (args.size < 2) {
+                    sender.sendMessage("${prefix}§cプレイヤーを指定しください。")
+                    return false
+                }
+                val id = args[1]
+                val targetPlayer = Bukkit.getOfflinePlayer(id)
+                val uuid = targetPlayer.uniqueId.toString()
+                if (!existPlayer(targetPlayer)) {
+                    sender.sendMessage("${prefix}§cプレイヤー情報を取得できませんでした。could not get player info.")
+                    return false
+                }
+                sender.sendMessage("${prefix}§aブロックを解除します。")
+                object : BukkitRunnable(){
+                    override fun run() {
+                        MailConsole.unblockUser(uuid,sender.uniqueId.toString())
+                    }
+                }.runTask(plugin)
+            }
+
             /* §c/mmail remove <mail-id> <- 指定したIDのメールを削除します。
             "remove" -> {
                 if(sender is Player){

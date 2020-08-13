@@ -30,6 +30,9 @@ object MailConsole {
      * @return mailResult[MailResult<V>]
      */
     fun sendMail(from: String, to: String, title: String, tag: String, message: String, senderType: MailSenderType): MailResult {
+        //  BlockCheck
+        if(checkBlock(from,to)) return MailResult.Error(MailErrorReason.BLOCKED)
+
         val current = LocalDateTime.now()
         val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
         val formatted = current.format(formatter)
@@ -256,6 +259,66 @@ object MailConsole {
         }
 
         result.close()
+        statement.close()
+    }
+
+    /**
+     * function of Check block.
+     * @param from[String]
+     * @param to[String]
+     * @return [Boolean] if blocked,return true. else return false
+     */
+    fun checkBlock(from:String,to: String):Boolean{
+        plugin.dataBase.open()
+        val connection = plugin.dataBase.connection
+        if (connection == null) {
+            plugin.dataBase.sendErrorMessage()
+            return false
+        }
+        val sql = "SELECT * FROM mail_block_list WHERE from_player='$from' AND to_player='$to' LIMIT 1;"
+        val statement = connection.createStatement()
+        val result = statement.executeQuery(escapeWildcardsForMySQL(sql))
+        val b = result.next()
+        result.close()
+        statement.close()
+        return b
+    }
+
+    /**
+     * function of block player
+     * @param from[String]
+     * @param to[String]
+     */
+    fun blockUser(from: String,to: String){
+        if(checkBlock(from,to))return
+        plugin.dataBase.open()
+        val connection = plugin.dataBase.connection
+        if (connection == null) {
+            plugin.dataBase.sendErrorMessage()
+            return
+        }
+        val sql = "INSERT INTO mail_block_list (from_player,to_player) VALUES ('$from','$to');"
+        val statement = connection.createStatement()
+        statement.executeUpdate(escapeWildcardsForMySQL(sql))
+        statement.close()
+    }
+
+    /**
+     * function of unblock player
+     * @param from[String]
+     * @param to[String]
+     */
+    fun unblockUser(from: String,to: String){
+        if(!checkBlock(from,to))return
+        plugin.dataBase.open()
+        val connection = plugin.dataBase.connection
+        if (connection == null) {
+            plugin.dataBase.sendErrorMessage()
+            return
+        }
+        val sql = "DELETE FROM mail_block_list WHERE from_player='$from' AND to_player='$to';"
+        val statement = connection.createStatement()
+        statement.executeUpdate(escapeWildcardsForMySQL(sql))
         statement.close()
     }
 

@@ -10,5 +10,6 @@ sealed class MailResult {
 }
 
 enum class MailErrorReason {
-    CAN_NOT_ACCESS_DB
+    CAN_NOT_ACCESS_DB,
+    BLOCKED
 }
