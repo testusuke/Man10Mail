@@ -202,6 +202,7 @@ object MailConsole {
         return MailInformation(id, from, to, title, message, tag)
     }
 
+    /*
     /**
      * function of remove old mail
      * @param uuid[String] uuid
@@ -229,6 +230,50 @@ object MailConsole {
         removeStatement.close()
         //  Logger
         plugin.logger.info("delete $amount mails. uuid:$uuid")
+    }*/
+    /**
+     * function of remove old mail
+     * @param uuid[String] uuid
+     */
+    fun removeOldMail(uuid: String){
+        plugin.dataBase.open()
+        val connection = plugin.dataBase.connection
+        if (connection == null) {
+            plugin.dataBase.sendErrorMessage()
+            return
+        }
+        val countSql = "SELECT id FROM mail_list where to_player='${uuid}';"
+        val statement = connection.createStatement()
+        val countResult = statement.executeQuery(escapeWildcardsForMySQL(countSql))
+        //  count
+        val c = plugin.dataBase.countColumn(countResult)
+        if(c <= 54){
+            countResult.close()
+            statement.close()
+            return
+        }
+        var mustRemoveValue = c - 54
+        val deleteReadSQL = "DELETE FROM mail_list WHERE id='$uuid' AND read='true' ORDER BY id asc LIMIT $mustRemoveValue;"
+        val removeReadStatement = connection.createStatement()
+        val removedCount = removeReadStatement.executeUpdate(escapeWildcardsForMySQL(deleteReadSQL))
+        mustRemoveValue - removedCount
+        if(mustRemoveValue == 0){
+            removeReadStatement.close()
+            return
+        }
+        //
+        val sql = "SELECT id FROM mail_list where to_player='${uuid}' ORDER BY id asc LIMIT 54,;"
+        val removeStatement = connection.createStatement()
+        val result = removeStatement.executeQuery(escapeWildcardsForMySQL(sql))
+        while (result.next()){
+            val id = result.getInt("id")
+            val removeSql = "DELETE FROM mail_list WHERE id='${id}';"
+            removeStatement.executeUpdate(escapeWildcardsForMySQL(removeSql))
+        }
+        result.close()
+        removeStatement.close()
+        //  Logger
+        plugin.logger.info("delete ${c-54} mails. uuid:$uuid")
     }
 
     /**
@@ -321,6 +366,11 @@ object MailConsole {
         statement.executeUpdate(escapeWildcardsForMySQL(sql))
         statement.close()
     }
+
+    /**
+     * function of create Mail Item.
+     *
+     */
 
     private fun formatFromUser(from: String, senderType: MailSenderType): String {
         return when (senderType) {
