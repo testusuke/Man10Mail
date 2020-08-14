@@ -441,6 +441,7 @@ object MailCommand : CommandExecutor {
             §6§l/mmail help -> ヘルプを表示します。
             §6§l/mmail send <player> <title> <message> <- メールを送信します。メッセージの改行は[;]を入力してください。
             §6§l/mmail notice <- 通知を有効/無効にします。
+            §6§l/mmail block/unblock <player> <- ブロックしてメールを受診しません。
             §c§lAdmin Commands
             §c§l/mmail send-tag/send-all/remove these command can use on the console.
             §c§l/mmail send-tag <player> <title> <tag> <message> <- タグ付きでメッセージを送信します。tag 0<-normal 5<-notice 6<-information etc...
