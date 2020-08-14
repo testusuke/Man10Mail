@@ -2,6 +2,7 @@ package net.testusuke.open.man10mail
 
 import net.testusuke.open.man10mail.Main.Companion.plugin
 import net.testusuke.open.man10mail.Main.Companion.prefix
+import org.bukkit.Bukkit
 import org.bukkit.configuration.Configuration
 import org.bukkit.configuration.file.YamlConfiguration
 import org.bukkit.entity.Player
@@ -16,6 +17,7 @@ import java.util.*
 object MailNoticeSetting {
     private val noticeList = mutableListOf<String>()
 
+    /*
     //  config
     private lateinit var file: File
 
@@ -35,9 +37,10 @@ object MailNoticeSetting {
         }
         c
     }
-
+     */
     fun loadList() {
         noticeList.clear()
+        /*
         val listString = this.config.getString("notice").toString()
         val listArgs = listString.split(",")
         for (uuid in listArgs) {
@@ -45,8 +48,13 @@ object MailNoticeSetting {
             noticeList.add(uuid)
         }
         plugin.logger.info("load notice data ${noticeList.size} players.")
+         */
+        for(player in Bukkit.getOnlinePlayers()){
+            noticeList.add(player.uniqueId.toString())
+        }
     }
 
+    /*
     fun saveList() {
         var listString = ""
         for (uuid in noticeList) {
@@ -61,6 +69,7 @@ object MailNoticeSetting {
         this.config.save(file)
         plugin.logger.info("saved notice data.")
     }
+     */
 
     fun enableNotice(player: Player) {
         noticeList.add(player.uniqueId.toString())

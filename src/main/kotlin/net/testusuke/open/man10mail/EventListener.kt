@@ -52,6 +52,7 @@ object EventListener : Listener {
                 MailConsole.sendEveryoneMail(player.uniqueId.toString())
                 MailConsole.removeOldMail(player.uniqueId.toString())
                 MailConsole.sendNotReadMail(player)
+                MailNoticeSetting.enableNotice(player)
             }
         }.runTask(plugin)
 

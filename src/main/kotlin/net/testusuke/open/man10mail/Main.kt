@@ -62,7 +62,7 @@ class Main : JavaPlugin() {
 
     override fun onDisable() {
         //  save
-        MailNoticeSetting.saveList()
+        //MailNoticeSetting.saveList()
         //  enable
         config.set("enable", enable)
         this.saveConfig()
