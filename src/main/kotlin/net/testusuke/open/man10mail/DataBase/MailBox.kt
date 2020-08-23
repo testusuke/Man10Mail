@@ -99,7 +99,7 @@ object MailBox {
 
     }
 
-    private fun formatFromUser(str: String): String {
+    fun formatFromUser(str: String): String {
         return if (str.startsWith("&")) {    //  Server
             str.substring(1)
         } else if (str.startsWith("#")) {  //  Custom

@@ -27,7 +27,16 @@ class Main : JavaPlugin() {
         try {
             config.getInt("money")
         }catch (e:Exception){
-            logger.warning("can't get money of send mail.check configuration.")
+            logger.warning("can't get money to send mail.check configuration.")
+            0
+        }
+    }
+    //  money of send mail
+    val MONEY_EXPORT_MAIL:Int by lazy {
+        try {
+            config.getInt("export_money")
+        }catch (e:Exception){
+            logger.warning("can't get money to export mail.check configuration.")
             0
         }
     }

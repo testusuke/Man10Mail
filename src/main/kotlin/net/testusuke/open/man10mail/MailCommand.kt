@@ -12,7 +12,6 @@ import org.bukkit.command.CommandExecutor
 import org.bukkit.command.CommandSender
 import org.bukkit.entity.Player
 import org.bukkit.scheduler.BukkitRunnable
-import java.util.*
 
 /**
  * Created by testusuke on 2020/07/04
@@ -325,8 +324,13 @@ object MailCommand : CommandExecutor {
             }
 
             "block" -> {
-                if(sender !is Player)return false
-                if(!sender.hasPermission(Permission.OPEN_MAIL_BOX)){
+                if (sender !is Player) return false
+
+                if (!enable) {
+                    sendDisable(sender)
+                    return false
+                }
+                if (!sender.hasPermission(Permission.OPEN_MAIL_BOX)) {
                     sendPermissionError(sender)
                     return false
                 }
@@ -342,17 +346,21 @@ object MailCommand : CommandExecutor {
                     return false
                 }
                 sender.sendMessage("${prefix}§aプレイヤーをブロックします。")
-                object : BukkitRunnable(){
+                object : BukkitRunnable() {
                     override fun run() {
-                        MailConsole.blockUser(uuid,sender.uniqueId.toString())
+                        MailConsole.blockUser(uuid, sender.uniqueId.toString())
                     }
                 }.runTask(plugin)
 
             }
 
             "unblock" -> {
-                if(sender !is Player)return false
-                if(!sender.hasPermission(Permission.OPEN_MAIL_BOX)){
+                if (sender !is Player) return false
+                if (!enable) {
+                    sendDisable(sender)
+                    return false
+                }
+                if (!sender.hasPermission(Permission.OPEN_MAIL_BOX)) {
                     sendPermissionError(sender)
                     return false
                 }
@@ -368,9 +376,9 @@ object MailCommand : CommandExecutor {
                     return false
                 }
                 sender.sendMessage("${prefix}§aブロックを解除します。")
-                object : BukkitRunnable(){
+                object : BukkitRunnable() {
                     override fun run() {
-                        MailConsole.unblockUser(uuid,sender.uniqueId.toString())
+                        MailConsole.unblockUser(uuid, sender.uniqueId.toString())
                     }
                 }.runTask(plugin)
             }
@@ -442,6 +450,7 @@ object MailCommand : CommandExecutor {
             §6§l/mmail send <player> <title> <message> <- メールを送信します。メッセージの改行は[;]を入力してください。
             §6§l/mmail notice <- 通知を有効/無効にします。
             §6§l/mmail block/unblock <player> <- ブロックしてメールを受診しません。
+            §a§lメールボックスを開きメールを右クリックすることで紙に出力できます。
             §c§lAdmin Commands
             §c§l/mmail send-tag/send-all/remove these command can use on the console.
             §c§l/mmail send-tag <player> <title> <tag> <message> <- タグ付きでメッセージを送信します。tag 0<-normal 5<-notice 6<-information etc...
