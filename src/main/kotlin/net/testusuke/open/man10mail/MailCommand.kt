@@ -36,13 +36,10 @@ object MailCommand : CommandExecutor {
                     return false
                 }
                 sender.sendMessage("${prefix}§aメールボックスを開きます。")
-                object : BukkitRunnable(){
-                    override fun run() {
-                        MailConsole.sendEveryoneMail(sender.uniqueId.toString())
-                        MailBox.openMailBox(sender)
-                    }
-                }.runTask(plugin)
-
+                Thread(Runnable {
+                    MailConsole.sendEveryoneMail(sender.uniqueId.toString())
+                    MailBox.openMailBox(sender)
+                }).start()
                 return true
             } else {
                 sendNotPlayerError(sender)
@@ -116,39 +113,38 @@ object MailCommand : CommandExecutor {
                 if(!sender.hasPermission(Permission.ADMIN) && plugin.MONEY_SEND_MAIL != 0) {
                     VaultManager.economy?.withdrawPlayer(sender, plugin.MONEY_SEND_MAIL.toDouble())
                 }
-                object : BukkitRunnable() {
-                    override fun run() {
-                        val message = formatMessage(args, 3)
-                        //  Send Mail
-                        val result = MailConsole.sendMail(sender.uniqueId.toString(), uuid, title, "0", message, MailSenderType.PLAYER)
-                        if (result is MailResult.Success) {
-                            val mailID = result.id
 
-                            sender.sendMessage("${prefix}§aメールを送信します。")
-                            sender.sendMessage("§6メール番号: $mailID")
-                            sender.sendMessage("§6タイトル(title): ${title.replace("&","§")}")
-                            /*
-                            sender.sendMessage("§6メール本文:")
-                            MailUtil.sendMailMessage(sender,message)
-                             */
+                Thread(Runnable {
+                    val message = formatMessage(args, 3)
+                    //  Send Mail
+                    val result = MailConsole.sendMail(sender.uniqueId.toString(), uuid, title, "0", message, MailSenderType.PLAYER)
+                    if (result is MailResult.Success) {
+                        val mailID = result.id
 
-                        } else if (result is MailResult.Error) {
-                            //  Vault 返金
-                            //  Vault
-                            if(!sender.hasPermission(Permission.ADMIN) && plugin.MONEY_SEND_MAIL != 0) {
-                                VaultManager.economy?.depositPlayer(sender, plugin.MONEY_SEND_MAIL.toDouble())
+                        sender.sendMessage("${prefix}§aメールを送信します。")
+                        sender.sendMessage("§6メール番号: $mailID")
+                        sender.sendMessage("§6タイトル(title): ${title.replace("&","§")}")
+                        /*
+                        sender.sendMessage("§6メール本文:")
+                        MailUtil.sendMailMessage(sender,message)
+                         */
+
+                    } else if (result is MailResult.Error) {
+                        //  Vault 返金
+                        //  Vault
+                        if(!sender.hasPermission(Permission.ADMIN) && plugin.MONEY_SEND_MAIL != 0) {
+                            VaultManager.economy?.depositPlayer(sender, plugin.MONEY_SEND_MAIL.toDouble())
+                        }
+                        when (result.reason) {
+                            MailErrorReason.CAN_NOT_ACCESS_DB -> {
+                                sender.sendMessage("${prefix}§c失敗しました。")
                             }
-                            when (result.reason) {
-                                MailErrorReason.CAN_NOT_ACCESS_DB -> {
-                                    sender.sendMessage("${prefix}§c失敗しました。")
-                                }
-                                MailErrorReason.BLOCKED -> {
-                                    sender.sendMessage("${prefix}§c送信先にブロックされています。")
-                                }
+                            MailErrorReason.BLOCKED -> {
+                                sender.sendMessage("${prefix}§c送信先にブロックされています。")
                             }
                         }
                     }
-                }.runTask(plugin)
+                }).start()
             }
             "send-tag" -> {
                 if (sender is Player) {
@@ -185,33 +181,32 @@ object MailCommand : CommandExecutor {
                         sender.sendMessage("${prefix}§cメッセージを入力してください。please enter message.")
                         return false
                     }
-                    object : BukkitRunnable() {
-                        override fun run() {
-                            val message = formatMessage(args, 4)
-                            //  Send Mail
-                            val result = MailConsole.sendMail(sender.uniqueId.toString(), uuid, title, tag, message, MailSenderType.PLAYER)
-                            //  Send Mail
-                            if (result is MailResult.Success) {
-                                val mailID = result.id
 
-                                sender.sendMessage("${prefix}§aメールを送信します。")
-                                sender.sendMessage("§6メール番号: $mailID")
-                                sender.sendMessage("§6タイトル(title): ${title.replace("&","§")}")
-                                /*
-                                sender.sendMessage("§6メール本文:")
-                                MailUtil.sendMailMessage(sender,message)
-                                 */
+                    Thread(Runnable {
+                        val message = formatMessage(args, 4)
+                        //  Send Mail
+                        val result = MailConsole.sendMail(sender.uniqueId.toString(), uuid, title, tag, message, MailSenderType.PLAYER)
+                        //  Send Mail
+                        if (result is MailResult.Success) {
+                            val mailID = result.id
 
-                            } else if (result is MailResult.Error) {
-                                when (result.reason) {
-                                    MailErrorReason.CAN_NOT_ACCESS_DB -> {
-                                        sender.sendMessage("${prefix}§c失敗しました。")
-                                        cancel()
-                                    }
+                            sender.sendMessage("${prefix}§aメールを送信します。")
+                            sender.sendMessage("§6メール番号: $mailID")
+                            sender.sendMessage("§6タイトル(title): ${title.replace("&","§")}")
+                            /*
+                            sender.sendMessage("§6メール本文:")
+                            MailUtil.sendMailMessage(sender,message)
+                             */
+
+                        } else if (result is MailResult.Error) {
+                            when (result.reason) {
+                                MailErrorReason.CAN_NOT_ACCESS_DB -> {
+                                    sender.sendMessage("${prefix}§c失敗しました。")
+                                    return@Runnable
                                 }
                             }
                         }
-                    }.runTask(plugin)
+                    }).start()
                 } else {
                     //  from
                     if (args.size < 2) return false
@@ -230,34 +225,31 @@ object MailCommand : CommandExecutor {
                     val tag = args[4]
                     //  Message
                     if (args.size < 6) return false
+                    Thread(Runnable {
+                        val message = formatMessage(args, 5)
+                        //  Send Mail
+                        val result = MailConsole.sendMail(from, uuid, title, tag, message, MailSenderType.CUSTOM)
+                        //  Send Mail
+                        if (result is MailResult.Success) {
+                            val mailID = result.id
 
-                    object : BukkitRunnable() {
-                        override fun run() {
-                            val message = formatMessage(args, 5)
-                            //  Send Mail
-                            val result = MailConsole.sendMail(from, uuid, title, tag, message, MailSenderType.CUSTOM)
-                            //  Send Mail
-                            if (result is MailResult.Success) {
-                                val mailID = result.id
+                            sender.sendMessage("${prefix}§aメールを送信します。")
+                            sender.sendMessage("§6メール番号: $mailID")
+                            sender.sendMessage("§6タイトル(title): ${title.replace("&","§")}")
+                            /*
+                            sender.sendMessage("§6メール本文:")
+                            MailUtil.sendMailMessage(sender,message)
+                             */
 
-                                sender.sendMessage("${prefix}§aメールを送信します。")
-                                sender.sendMessage("§6メール番号: $mailID")
-                                sender.sendMessage("§6タイトル(title): ${title.replace("&","§")}")
-                                /*
-                                sender.sendMessage("§6メール本文:")
-                                MailUtil.sendMailMessage(sender,message)
-                                 */
-
-                            } else if (result is MailResult.Error) {
-                                when (result.reason) {
-                                    MailErrorReason.CAN_NOT_ACCESS_DB -> {
-                                        sender.sendMessage("${prefix}§c失敗しました。")
-                                        cancel()
-                                    }
+                        } else if (result is MailResult.Error) {
+                            when (result.reason) {
+                                MailErrorReason.CAN_NOT_ACCESS_DB -> {
+                                    sender.sendMessage("${prefix}§c失敗しました。")
+                                    return@Runnable
                                 }
                             }
                         }
-                    }.runTask(plugin)
+                    }).start()
                 }
             }
 
@@ -280,32 +272,31 @@ object MailCommand : CommandExecutor {
                     sender.sendMessage("${prefix}§cメッセージを入力してください。please enter message.")
                     return false
                 }
-                object : BukkitRunnable() {
-                    override fun run() {
-                        val message = formatMessage(args, 3)
-                        //  Send Mail
-                        val result = MailConsole.issueEveryoneMail("SERVER", title, tag, message, MailSenderType.SERVER)
-                        if (result is MailResult.Success) {
-                            val mailID = result.id
 
-                            sender.sendMessage("${prefix}§aメールを送信します。")
-                            sender.sendMessage("§6メール番号: $mailID")
-                            sender.sendMessage("§6タイトル(title): ${title.replace("&","§")}")
-                            /*
-                            sender.sendMessage("§6メール本文:")
-                            MailUtil.sendMailMessage(sender,message)
-                             */
+                Thread(Runnable {
+                    val message = formatMessage(args, 3)
+                    //  Send Mail
+                    val result = MailConsole.issueEveryoneMail("SERVER", title, tag, message, MailSenderType.SERVER)
+                    if (result is MailResult.Success) {
+                        val mailID = result.id
 
-                        } else if (result is MailResult.Error) {
-                            when (result.reason) {
-                                MailErrorReason.CAN_NOT_ACCESS_DB -> {
-                                    sender.sendMessage("${prefix}§c失敗しました。")
-                                    cancel()
-                                }
+                        sender.sendMessage("${prefix}§aメールを送信します。")
+                        sender.sendMessage("§6メール番号: $mailID")
+                        sender.sendMessage("§6タイトル(title): ${title.replace("&","§")}")
+                        /*
+                        sender.sendMessage("§6メール本文:")
+                        MailUtil.sendMailMessage(sender,message)
+                         */
+
+                    } else if (result is MailResult.Error) {
+                        when (result.reason) {
+                            MailErrorReason.CAN_NOT_ACCESS_DB -> {
+                                sender.sendMessage("${prefix}§c失敗しました。")
+                                return@Runnable
                             }
                         }
                     }
-                }.runTask(plugin)
+                }).start()
             }
 
             "on" -> {
@@ -346,11 +337,9 @@ object MailCommand : CommandExecutor {
                     return false
                 }
                 sender.sendMessage("${prefix}§aプレイヤーをブロックします。")
-                object : BukkitRunnable() {
-                    override fun run() {
-                        MailConsole.blockUser(uuid, sender.uniqueId.toString())
-                    }
-                }.runTask(plugin)
+                Thread(Runnable {
+                    MailConsole.blockUser(uuid, sender.uniqueId.toString())
+                }).start()
 
             }
 
@@ -376,11 +365,10 @@ object MailCommand : CommandExecutor {
                     return false
                 }
                 sender.sendMessage("${prefix}§aブロックを解除します。")
-                object : BukkitRunnable() {
-                    override fun run() {
-                        MailConsole.unblockUser(uuid, sender.uniqueId.toString())
-                    }
-                }.runTask(plugin)
+
+                Thread(Runnable {
+                    MailConsole.unblockUser(uuid, sender.uniqueId.toString())
+                }).start()
             }
 
             /* §c/mmail remove <mail-id> <- 指定したIDのメールを削除します。

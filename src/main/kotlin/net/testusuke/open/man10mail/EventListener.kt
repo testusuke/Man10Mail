@@ -38,35 +38,32 @@ object EventListener : Listener {
             //  LeftClick
             if(event.isLeftClick) {
                 //  show
-                object : BukkitRunnable() {
-                    override fun run() {
-                        MailBox.showMail(player, id)
-                    }
-                }.runTask(plugin)
+                Thread(Runnable {
+                    MailBox.showMail(player, id)
+                }).start()
+
             }else if(event.isRightClick){
-                object : BukkitRunnable() {
-                    override fun run() {
-                        val result = MailConsole.getInformation(id) ?: return
-                        //  Vault
-                        val money = VaultManager.economy?.getBalance(player)
-                        if (money != null) {
-                            if(!player.hasPermission(Permission.ADMIN) && money < plugin.MONEY_EXPORT_MAIL.toDouble()){
-                                player.sendMessage("${Main.prefix}§c必要料金を持っていません。料金: ${plugin.MONEY_EXPORT_MAIL}")
-                                return
-                            }
+                Thread(Runnable {
+                    val result = MailConsole.getInformation(id) ?: return@Runnable
+                    //  Vault
+                    val money = VaultManager.economy?.getBalance(player)
+                    if (money != null) {
+                        if(!player.hasPermission(Permission.ADMIN) && money < plugin.MONEY_EXPORT_MAIL.toDouble()){
+                            player.sendMessage("${Main.prefix}§c必要料金を持っていません。料金: ${plugin.MONEY_EXPORT_MAIL}")
+                            return@Runnable
                         }
-                        //  引き出し
-                        if(!player.hasPermission(Permission.ADMIN) && plugin.MONEY_EXPORT_MAIL != 0) {
-                            VaultManager.economy?.withdrawPlayer(player, plugin.MONEY_SEND_MAIL.toDouble())
-                        }
-                        //  Create
-                        val item = MailUtil.createExportedMail(result)
-                        //  Add
-                        player.inventory.addItem(item)
-                        //  Message
-                        player.sendMessage("${prefix}§aメールを紙に出力しました。")
                     }
-                }.runTask(plugin)
+                    //  引き出し
+                    if(!player.hasPermission(Permission.ADMIN) && plugin.MONEY_EXPORT_MAIL != 0) {
+                        VaultManager.economy?.withdrawPlayer(player, plugin.MONEY_SEND_MAIL.toDouble())
+                    }
+                    //  Create
+                    val item = MailUtil.createExportedMail(result)
+                    //  Add
+                    player.inventory.addItem(item)
+                    //  Message
+                    player.sendMessage("${prefix}§aメールを紙に出力しました。")
+                }).start()
             }
             //  Close GUI
             player.closeInventory()
@@ -77,16 +74,12 @@ object EventListener : Listener {
     @EventHandler
     fun onPlayerJoin(event: PlayerJoinEvent) {
         val player = event.player
-        //  Check
-        object : BukkitRunnable(){
-            override fun run() {
-                MailConsole.sendEveryoneMail(player.uniqueId.toString())
-                MailConsole.removeOldMail(player.uniqueId.toString())
-                MailConsole.sendNotReadMail(player)
-                MailNoticeSetting.enableNotice(player)
-            }
-        }.runTask(plugin)
-
+        Thread(Runnable {
+            MailConsole.sendEveryoneMail(player.uniqueId.toString())
+            MailConsole.removeOldMail(player.uniqueId.toString())
+            MailConsole.sendNotReadMail(player)
+            MailNoticeSetting.enableNotice(player)
+        }).start()
     }
 
     /**

@@ -1,6 +1,7 @@
 package net.testusuke.open.man10mail.DataBase
 
 import net.testusuke.open.man10mail.Main.Companion.plugin
+import org.bukkit.scheduler.BukkitRunnable
 import java.sql.Connection
 import java.sql.DriverManager
 import java.sql.ResultSet
@@ -32,7 +33,7 @@ class DataBase(private val prefix: String) {
         loadConfig()
         //  クラスローダー
         loadClass()
-        //  Test Connect
+        //  test Connect
         testConnect()
         //  Logger
         plugin.logger.info("DataBaseを読み込みました。")
@@ -68,16 +69,18 @@ class DataBase(private val prefix: String) {
         }
     }
 
-    private fun testConnect(): Boolean? {
-        plugin.logger.info("接続テスト中....")
-        //  open
-        open()
-        if (this.connection == null) {
-            plugin.logger.info("接続に失敗しました。")
-            return false
-        }
-        plugin.logger.info("接続に成功しました！")
-        return true
+    private fun testConnect() {
+        Thread(Runnable {
+            plugin.logger.info("接続テスト中....")
+            //  open
+            open()
+            if (this.connection == null) {
+                plugin.logger.info("接続に失敗しました。")
+                return@Runnable
+            }
+            plugin.logger.info("接続に成功しました！")
+            return@Runnable
+        }).start()
     }
 
     //  カラム数
