@@ -38,19 +38,31 @@ object MailConsole {
         val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
         val formatted = current.format(formatter)
         val formattedFrom = formatFromUser(from,senderType)
-        var sql = "INSERT INTO mail_list (to_player,to_name,from_player,to_name,title,message,tag,date) VALUES('${to}','${getPlayerName(to)}','$formattedFrom','${getPlayerName(from)}','${title}','${message}','${MailUtil.convertTag(tag)}','${formatted}');"
+        //  Connection
         plugin.dataBase.open()
         val connection = plugin.dataBase.connection
         if (connection == null) {
             plugin.dataBase.sendErrorMessage()
             return MailResult.Error(MailErrorReason.CAN_NOT_ACCESS_DB)
         }
-        val statement = connection.createStatement()
 
-        statement.executeUpdate(escapeWildcardsForMySQL(sql), Statement.RETURN_GENERATED_KEYS)
+        //val sql = "INSERT INTO mail_list (to_player,to_name,from_player,to_name,title,message,tag,date) VALUES('${to}','${getPlayerName(to)}','$formattedFrom','${getPlayerName(from)}','${title}','${message}','${MailUtil.convertTag(tag)}','${formatted}');"
+        val sql = "INSERT INTO mail_list (to_player,to_name,from_player,to_name,title,message,tag,date) VALUES(?, ?, ?, ?, ?, ?, ?, ?);"
+        val statement = connection.prepareStatement(sql,Statement.RETURN_GENERATED_KEYS)
+        statement.setString(1, to)
+        statement.setString(2, getPlayerName(to))
+        statement.setString(3, formattedFrom)
+        statement.setString(4, getPlayerName(from))
+        statement.setString(5, title)
+        statement.setString(6, message)
+        statement.setString(7, MailUtil.convertTag(tag))
+        statement.setString(8,formatted)
+
+        statement.executeUpdate()
         val resultSet = statement.generatedKeys
-        resultSet.next()
-        val id = resultSet.getInt(1)
+        val id = if(resultSet.next()) {
+            resultSet.getInt(1)
+        }else -1
         resultSet.close()
         statement.close()
 
@@ -74,19 +86,27 @@ object MailConsole {
         val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
         val formatted = current.format(formatter)
         val formattedFrom = formatFromUser(from,senderType)
-        var sql = "INSERT INTO mail_all (from_name,title,message,tag,`date`) VALUES('$formattedFrom','${title}','${message}','${MailUtil.convertTag(tag)}','${formatted}');"
+        //  Connection
         plugin.dataBase.open()
         val connection = plugin.dataBase.connection
         if (connection == null) {
             plugin.dataBase.sendErrorMessage()
             return MailResult.Error(MailErrorReason.CAN_NOT_ACCESS_DB)
         }
-        val statement = connection.createStatement()
+        //val sql = "INSERT INTO mail_all (from_name,title,message,tag,`date`) VALUES('$formattedFrom','${title}','${message}','${MailUtil.convertTag(tag)}','${formatted}');"
+        val sql = "INSERT INTO mail_all (from_name,title,message,tag,`date`) VALUES(?, ?, ?, ?, ?);"
+        val statement = connection.prepareStatement(sql,Statement.RETURN_GENERATED_KEYS)
+        statement.setString(1,formattedFrom)
+        statement.setString(2,title)
+        statement.setString(3,message)
+        statement.setString(4,MailUtil.convertTag(tag))
+        statement.setString(5,formatted)
 
-        statement.executeUpdate(escapeWildcardsForMySQL(sql), Statement.RETURN_GENERATED_KEYS)
+        statement.executeUpdate()
         val resultSet = statement.generatedKeys
-        resultSet.next()
-        val id = resultSet.getInt(1)
+        val id = if(resultSet.next()) {
+            resultSet.getInt(1)
+        }else -1
 
         //  close
         resultSet.close()
@@ -114,17 +134,11 @@ object MailConsole {
             plugin.dataBase.sendErrorMessage()
             return MailResult.Error(MailErrorReason.CAN_NOT_ACCESS_DB)
         }
-        val selectReadSQL = "SELECT `from_mail_id` FROM `mail_read` WHERE `to_player`='${uuid}';"
-        /**
-         * test
-         */
-        Bukkit.broadcastMessage("This function is sendEveryoneMail()")
-        Bukkit.broadcastMessage("Before: $selectReadSQL")
-        Bukkit.broadcastMessage("After: ${escapeWildcardsForMySQL(selectReadSQL)}")
+        val selectReadSQL = "SELECT from_mail_id FROM mail_read WHERE to_player=?;"
+        val selectReadStatement = connection.prepareStatement(selectReadSQL)
+        selectReadStatement.setString(1,uuid)
 
-
-        val selectReadStatement = connection.createStatement()
-        val selectReadResult = selectReadStatement.executeQuery(escapeWildcardsForMySQL(selectReadSQL))
+        val selectReadResult = selectReadStatement.executeQuery()
         //  送信済みのMail ID
         val readMailList = mutableListOf<Int>()
         while (selectReadResult.next()) {
@@ -137,9 +151,8 @@ object MailConsole {
         //  Mail All Table
         val selectAllSQL = "SELECT * FROM mail_all;"
         val selectAllStatement = connection.createStatement()
-        val selectAllResult = selectAllStatement.executeQuery(escapeWildcardsForMySQL(selectAllSQL))
-        //  create statement
-        val insertMailStatement = connection.createStatement()
+        val selectAllResult = selectAllStatement.executeQuery(selectAllSQL)
+
         var amount = 0
         while (selectAllResult.next()) {
             if (!readMailList.contains(selectAllResult.getInt("id"))) {
@@ -148,17 +161,35 @@ object MailConsole {
                 val tag = selectAllResult.getString("tag")
                 val message = selectAllResult.getString("message")
                 val date = selectAllResult.getString("date")
-                val insertMailSQL = "INSERT INTO mail_list (`to_player`,`to_name`,`from_player`,`from_name`,title,message,tag,date) VALUES('${uuid}','${getPlayerName(uuid)}','${from}','${getPlayerName(from)}','${title}','${message}','${MailUtil.convertTag(tag)}','${date}');"
-                insertMailStatement.executeUpdate(escapeWildcardsForMySQL(insertMailSQL))
+                //val insertMailSQL = "INSERT INTO mail_list (to_player,to_name,from_player,from_name,title,message,tag,date) VALUES('${uuid}','${getPlayerName(uuid)}','${from}','${getPlayerName(from)}','${title}','${message}','${MailUtil.convertTag(tag)}','${date}');"
+                val insertMailSQL = "INSERT INTO mail_list (to_player,to_name,from_player,from_name,title,message,tag,date) VALUES(?, ?, ?, ?, ?, ?, ?, ?);"
+                val insertMailStatement = connection.prepareStatement(insertMailSQL)
+                insertMailStatement.setString(1,uuid)
+                insertMailStatement.setString(2,getPlayerName(uuid))
+                insertMailStatement.setString(3,from)
+                insertMailStatement.setString(4, getPlayerName(from))
+                insertMailStatement.setString(5,title)
+                insertMailStatement.setString(6,message)
+                insertMailStatement.setString(7,MailUtil.convertTag(tag))
+                insertMailStatement.setString(8,date)
+                insertMailStatement.executeUpdate()
+                //  close
+                insertMailStatement.close()
 
-                val insertMailReadSQL = "INSERT INTO `mail_read` (`to_player`,`from_mail_id`) VALUES ('${uuid}','${selectAllResult.getInt("id")}');"
-                insertMailStatement.executeUpdate(escapeWildcardsForMySQL(insertMailReadSQL))
+                //val insertMailReadSQL = "INSERT INTO `mail_read` (`to_player`,`from_mail_id`) VALUES ('${uuid}','${selectAllResult.getInt("id")}');"
+                val insertMailReadSQL = "INSERT INTO mail_read (to_player,from_mail_id) VALUES (?, ?);"
+                val insertMailReadStatement = connection.prepareStatement(insertMailReadSQL)
+                insertMailReadStatement.setString(1,uuid)
+                insertMailReadStatement.setInt(2,selectAllResult.getInt("id"))
+                insertMailReadStatement.executeUpdate()
+                // close
+                insertMailReadStatement.close()
+
                 amount++
             }
         }
         selectAllResult.close()
         selectAllStatement.close()
-        insertMailStatement.close()
 
         return MailResult.Success(amount)
     }
@@ -175,9 +206,11 @@ object MailConsole {
             plugin.dataBase.sendErrorMessage()
             return false
         }
-        val sql = "DELETE FROM mail_all WHERE id='$id';"
-        val statement = connection.createStatement()
-        statement.executeUpdate(escapeWildcardsForMySQL(sql))
+        //val sql = "DELETE FROM mail_all WHERE id='$id';"
+        val sql = "DELETE FROM mail_all WHERE id=?;"
+        val statement = connection.prepareStatement(sql)
+        statement.setInt(1,id)
+        statement.executeUpdate()
         statement.close()
         return true
     }
@@ -196,20 +229,23 @@ object MailConsole {
             plugin.dataBase.sendErrorMessage()
             return null
         }
-        val sql = "SELECT * FROM mail_list WHERE id='$id' LIMIT 1;"
-        val statement = connection.createStatement()
-        val result = statement.executeQuery(escapeWildcardsForMySQL(sql))
-        result.next()
-        val from = result.getString("from_player")
-        val to = result.getString("to_player")
-        val title = result.getString("title")
-        val message = result.getString("message")
-        val tag = result.getString("tag")
-        val date = result.getString("date")
-
+        //val sql = "SELECT * FROM mail_list WHERE id='$id' LIMIT 1;"
+        val sql = "SELECT * FROM mail_list WHERE id=? LIMIT 1;"
+        val statement = connection.prepareStatement(sql)
+        statement.setInt(1,id)
+        val result = statement.executeQuery()
+        val info = if(result.next()) {
+            val from = result.getString("from_player")
+            val to = result.getString("to_player")
+            val title = result.getString("title")
+            val message = result.getString("message")
+            val tag = result.getString("tag")
+            val date = result.getString("date")
+            MailInformation(id, from, to, title, message, tag,date)
+        }else null
         result.close()
         statement.close()
-        return MailInformation(id, from, to, title, message, tag,date)
+        return info
     }
 
     /*
@@ -252,9 +288,11 @@ object MailConsole {
             plugin.dataBase.sendErrorMessage()
             return
         }
+        //val countSql = "SELECT id FROM mail_list where to_player='${uuid}';"
         val countSql = "SELECT id FROM mail_list where to_player='${uuid}';"
-        val statement = connection.createStatement()
-        val countResult = statement.executeQuery(escapeWildcardsForMySQL(countSql))
+        val statement = connection.prepareStatement(countSql)
+        statement.setString(1,uuid)
+        val countResult = statement.executeQuery()
         //  count
         val c = plugin.dataBase.countColumn(countResult)
         if(c <= 54){
@@ -263,25 +301,37 @@ object MailConsole {
             return
         }
         var mustRemoveValue = c - 54
-        val deleteReadSQL = "DELETE FROM mail_list WHERE id='$uuid' AND read='true' ORDER BY id asc LIMIT $mustRemoveValue;"
-        val removeReadStatement = connection.createStatement()
-        val removedCount = removeReadStatement.executeUpdate(escapeWildcardsForMySQL(deleteReadSQL))
+        //val deleteReadSQL = "DELETE FROM mail_list WHERE to_player='$uuid' AND read='true' ORDER BY id asc LIMIT $mustRemoveValue;"
+        val deleteReadSQL = "DELETE FROM mail_list WHERE to_player=? AND read=? ORDER BY id asc LIMIT ?;"
+        val removeReadStatement = connection.prepareStatement(deleteReadSQL)
+        removeReadStatement.setString(1,uuid)
+        removeReadStatement.setBoolean(2,true)
+        removeReadStatement.setInt(3,mustRemoveValue)
+        val removedCount = removeReadStatement.executeUpdate()
+
         mustRemoveValue - removedCount
         if(mustRemoveValue == 0){
             removeReadStatement.close()
             return
         }
-        //
-        val sql = "SELECT id FROM mail_list where to_player='${uuid}' ORDER BY id asc LIMIT 54,;"
-        val removeStatement = connection.createStatement()
-        val result = removeStatement.executeQuery(escapeWildcardsForMySQL(sql))
+        //  val sql = "SELECT id FROM mail_list where to_player='${uuid}' ORDER BY id asc LIMIT 54;"
+        val sql = "SELECT id FROM mail_list where to_player=? ORDER BY id asc LIMIT 54;"
+        val removeStatement = connection.prepareStatement(sql)
+        removeStatement.setString(1,uuid)
+        val result = removeStatement.executeQuery()
+        val deleteStatement = connection.createStatement()
         while (result.next()){
             val id = result.getInt("id")
             val removeSql = "DELETE FROM mail_list WHERE id='${id}';"
-            removeStatement.executeUpdate(escapeWildcardsForMySQL(removeSql))
+            deleteStatement.executeUpdate(removeSql)
         }
         result.close()
         removeStatement.close()
+        deleteStatement.close()
+        removeReadStatement.close()
+        countResult.close()
+        statement.close()
+
         //  Logger
         plugin.logger.info("delete ${c-54} mails. uuid:$uuid")
     }
@@ -297,9 +347,11 @@ object MailConsole {
             plugin.dataBase.sendErrorMessage()
             return
         }
-        val sql = "SELECT id,`read` FROM mail_list where to_player='${player.uniqueId.toString()}';"
-        val statement = connection.createStatement()
-        val result = statement.executeQuery(escapeWildcardsForMySQL(sql))
+        //  val sql = "SELECT id,`read` FROM mail_list where to_player='${player.uniqueId.toString()}';"
+        val sql = "SELECT id,`read` FROM mail_list where to_player=?;"
+        val statement = connection.prepareStatement(sql)
+        statement.setString(1,player.uniqueId.toString())
+        val result = statement.executeQuery()
         var amount = 0
         while (result.next()){
             if(!result.getBoolean("read")){
@@ -330,9 +382,12 @@ object MailConsole {
             plugin.dataBase.sendErrorMessage()
             return false
         }
-        val sql = "SELECT * FROM mail_block_list WHERE from_player='$from' AND to_player='$to' LIMIT 1;"
-        val statement = connection.createStatement()
-        val result = statement.executeQuery(escapeWildcardsForMySQL(sql))
+        //  val sql = "SELECT * FROM mail_block_list WHERE from_player='$from' AND to_player='$to' LIMIT 1;"
+        val sql = "SELECT * FROM mail_block_list WHERE from_player=? AND to_player=? LIMIT 1;"
+        val statement = connection.prepareStatement(sql)
+        statement.setString(1,from)
+        statement.setString(2,to)
+        val result = statement.executeQuery()
         val b = result.next()
         result.close()
         statement.close()
@@ -352,9 +407,12 @@ object MailConsole {
             plugin.dataBase.sendErrorMessage()
             return
         }
-        val sql = "INSERT INTO mail_block_list (from_player,to_player) VALUES ('$from','$to');"
-        val statement = connection.createStatement()
-        statement.executeUpdate(escapeWildcardsForMySQL(sql))
+        //  val sql = "INSERT INTO mail_block_list (from_player,to_player) VALUES ('$from','$to');"
+        val sql = "INSERT INTO mail_block_list (from_player,to_player) VALUES (?, ?);"
+        val statement = connection.prepareStatement(sql)
+        statement.setString(1,from)
+        statement.setString(2,to)
+        statement.executeUpdate()
         statement.close()
     }
 
@@ -371,9 +429,12 @@ object MailConsole {
             plugin.dataBase.sendErrorMessage()
             return
         }
-        val sql = "DELETE FROM mail_block_list WHERE from_player='$from' AND to_player='$to';"
-        val statement = connection.createStatement()
-        statement.executeUpdate(escapeWildcardsForMySQL(sql))
+        //  val sql = "DELETE FROM mail_block_list WHERE from_player='$from' AND to_player='$to';"
+        val sql = "DELETE FROM mail_block_list WHERE from_player=? AND to_player=?;"
+        val statement = connection.prepareStatement(sql)
+        statement.setString(1,from)
+        statement.setString(2,to)
+        statement.executeUpdate()
         statement.close()
     }
 
@@ -391,6 +452,7 @@ object MailConsole {
         }
     }
 
+    /*
     /**
      * MySQL String エスケープ
      */
@@ -411,6 +473,7 @@ object MailConsole {
             .replace("%", "\\%")
             .replace("_", "\\_")
     }
+     */
 
     //  Player Exist
     private fun existPlayer(player: OfflinePlayer):Boolean {
