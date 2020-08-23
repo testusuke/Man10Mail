@@ -47,7 +47,7 @@ object MailConsole {
         }
 
         //val sql = "INSERT INTO mail_list (to_player,to_name,from_player,to_name,title,message,tag,date) VALUES('${to}','${getPlayerName(to)}','$formattedFrom','${getPlayerName(from)}','${title}','${message}','${MailUtil.convertTag(tag)}','${formatted}');"
-        val sql = "INSERT INTO mail_list (to_player,to_name,from_player,to_name,title,message,tag,date) VALUES(?, ?, ?, ?, ?, ?, ?, ?);"
+        val sql = "INSERT INTO mail_list (to_player,to_name,from_player,from_name,title,message,tag,date) VALUES(?, ?, ?, ?, ?, ?, ?, ?);"
         val statement = connection.prepareStatement(sql,Statement.RETURN_GENERATED_KEYS)
         statement.setString(1, to)
         statement.setString(2, getPlayerName(to))
@@ -289,7 +289,7 @@ object MailConsole {
             return
         }
         //val countSql = "SELECT id FROM mail_list where to_player='${uuid}';"
-        val countSql = "SELECT id FROM mail_list where to_player='${uuid}';"
+        val countSql = "SELECT id FROM mail_list where to_player=?;"
         val statement = connection.prepareStatement(countSql)
         statement.setString(1,uuid)
         val countResult = statement.executeQuery()

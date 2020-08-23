@@ -46,8 +46,6 @@ class Main : JavaPlugin() {
         plugin = this
         //  Config
         this.saveDefaultConfig()
-        //  DB
-        dataBase = DataBase(prefix)
         //  Command
         getCommand("mmail")?.setExecutor(MailCommand)
         //  Event
@@ -58,6 +56,8 @@ class Main : JavaPlugin() {
         MailNoticeSetting.loadList()
         //  CoolTime
         CoolTime.prepare()
+        //  DB
+        dataBase = DataBase(prefix)
 
         //  Prefix
         try {
