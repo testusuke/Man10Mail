@@ -4,10 +4,11 @@ import net.testusuke.open.man10mail.MailNoticeSetting
 import net.testusuke.open.man10mail.MailUtil
 import net.testusuke.open.man10mail.Main.Companion.plugin
 import net.testusuke.open.man10mail.Main.Companion.prefix
+import org.apache.commons.lang.StringEscapeUtils
 import org.bukkit.Bukkit
 import org.bukkit.OfflinePlayer
 import org.bukkit.entity.Player
-import java.lang.Exception
+import java.sql.PreparedStatement
 import java.sql.Statement
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
@@ -56,7 +57,7 @@ object MailConsole {
         //  サーバー内にユーザーがいる場合は通知
         val player = Bukkit.getPlayer(UUID.fromString(to))
         if(player != null) {
-            if (MailNoticeSetting.isEnableNotice(player)) player.sendMessage("${prefix}§6新しいメールが届いています。")
+            if (MailNoticeSetting.isEnableNotice(player)) player.sendMessage("${prefix}§6新しいメールが届いています。/mmailでメールボックスを開く")
         }
         return MailResult.Success(id)
     }
@@ -95,7 +96,7 @@ object MailConsole {
         for (player in Bukkit.getOnlinePlayers()) {
             val uuid = player.uniqueId.toString()
             sendEveryoneMail(uuid)
-            if(MailNoticeSetting.isEnableNotice(player)) player.sendMessage("${prefix}§6新しいメールが届いています。")
+            if(MailNoticeSetting.isEnableNotice(player)) player.sendMessage("${prefix}§6新しいメールが届いています。/mmailでメールボックスを開く")
         }
 
         return MailResult.Success(id)
@@ -113,7 +114,15 @@ object MailConsole {
             plugin.dataBase.sendErrorMessage()
             return MailResult.Error(MailErrorReason.CAN_NOT_ACCESS_DB)
         }
-        val selectReadSQL = "SELECT from_mail_id FROM mail_read WHERE to_player='${uuid}';"
+        val selectReadSQL = "SELECT `from_mail_id` FROM `mail_read` WHERE `to_player`='${uuid}';"
+        /**
+         * test
+         */
+        Bukkit.broadcastMessage("This function is sendEveryoneMail()")
+        Bukkit.broadcastMessage("Before: $selectReadSQL")
+        Bukkit.broadcastMessage("After: ${escapeWildcardsForMySQL(selectReadSQL)}")
+
+
         val selectReadStatement = connection.createStatement()
         val selectReadResult = selectReadStatement.executeQuery(escapeWildcardsForMySQL(selectReadSQL))
         //  送信済みのMail ID
@@ -139,10 +148,10 @@ object MailConsole {
                 val tag = selectAllResult.getString("tag")
                 val message = selectAllResult.getString("message")
                 val date = selectAllResult.getString("date")
-                val insertMailSQL = "INSERT INTO mail_list (to_player,to_name,from_player,from_name,title,message,tag,date) VALUES('${uuid}','${getPlayerName(uuid)}','${from}','${getPlayerName(from)}','${title}','${message}','${MailUtil.convertTag(tag)}','${date}');"
+                val insertMailSQL = "INSERT INTO mail_list (`to_player`,`to_name`,`from_player`,`from_name`,title,message,tag,date) VALUES('${uuid}','${getPlayerName(uuid)}','${from}','${getPlayerName(from)}','${title}','${message}','${MailUtil.convertTag(tag)}','${date}');"
                 insertMailStatement.executeUpdate(escapeWildcardsForMySQL(insertMailSQL))
 
-                val insertMailReadSQL = "INSERT INTO mail_read (to_player,from_mail_id) VALUES ('${uuid}','${selectAllResult.getInt("id")}');"
+                val insertMailReadSQL = "INSERT INTO `mail_read` (`to_player`,`from_mail_id`) VALUES ('${uuid}','${selectAllResult.getInt("id")}');"
                 insertMailStatement.executeUpdate(escapeWildcardsForMySQL(insertMailReadSQL))
                 amount++
             }
@@ -173,7 +182,7 @@ object MailConsole {
         return true
     }
 
-    data class MailInformation(val id: Int, val from: String, val to: String, val title: String, val message: String, val tag: String)
+    data class MailInformation(val id: Int, val from: String, val to: String, val title: String, val message: String, val tag: String,val date:String)
 
     /**
      * function of get mail information
@@ -196,10 +205,11 @@ object MailConsole {
         val title = result.getString("title")
         val message = result.getString("message")
         val tag = result.getString("tag")
+        val date = result.getString("date")
 
         result.close()
         statement.close()
-        return MailInformation(id, from, to, title, message, tag)
+        return MailInformation(id, from, to, title, message, tag,date)
     }
 
     /*
@@ -300,7 +310,7 @@ object MailConsole {
         if(amount == 0){
             player.sendMessage("${prefix}§6未読メールはありません。")
         }else{
-            player.sendMessage("${prefix}§d${amount}件§6の未読メールがあります。")
+            player.sendMessage("${prefix}§d${amount}件§6の未読メールがあります。/mmailでメールボックスを開く")
         }
 
         result.close()
@@ -366,11 +376,6 @@ object MailConsole {
         statement.executeUpdate(escapeWildcardsForMySQL(sql))
         statement.close()
     }
-
-    /**
-     * function of create Mail Item.
-     *
-     */
 
     private fun formatFromUser(from: String, senderType: MailSenderType): String {
         return when (senderType) {

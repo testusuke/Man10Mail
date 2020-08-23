@@ -1,7 +1,10 @@
 package net.testusuke.open.man10mail
 
+import net.testusuke.open.man10mail.DataBase.MailBox
+import net.testusuke.open.man10mail.DataBase.MailConsole
 import net.testusuke.open.man10mail.DataBase.MailSenderType
 import net.testusuke.open.man10mail.Main.Companion.plugin
+import org.bukkit.Material
 import org.bukkit.NamespacedKey
 import org.bukkit.command.CommandSender
 import org.bukkit.entity.Player
@@ -117,6 +120,40 @@ object MailUtil {
     fun getMailID(item:ItemStack):Int{
         val meta = item.itemMeta
         return meta.persistentDataContainer[NamespacedKey(plugin,"id"), PersistentDataType.INTEGER] ?: return -0
+    }
+
+    /**
+     * function of create item that exported mail
+     * @param info[MailInformation]
+     * @return item[ItemStack]
+     */
+    fun createExportedMail(info:MailConsole.MailInformation):ItemStack {
+        val item = ItemStack(Material.PAPER)
+        val meta = item.itemMeta
+        //  title
+        meta.setDisplayName("§d件名(title): ${info.title.replace("&","§")}")
+        //  Lore
+        val lore = ArrayList<String>()
+        lore.add("§6送信元(from): ${MailBox.formatFromUser(info.from).replace("&","§")}")
+        lore.add("§6タグ(tag): ${formatTag(info.tag).replace("&","§")}")
+        lore.add("§6メッセージ(msg):")
+        //  for
+        val messages = info.message.split(";")
+        var i = 0
+        for (m in messages) {
+            if(i == 0){
+                lore.add(m.substring(1).replace("&","§"))
+                i++
+                continue
+            }
+            lore.add(m.replace("&","§"))
+        }
+        lore.add("§6日付(date): ${info.date}")
+        //  meta
+        meta.lore = lore
+        item.itemMeta = meta
+
+        return item
     }
 
 }

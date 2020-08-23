@@ -8,5 +8,8 @@ database:
 prefix: "&e[&dMan10&aMail&e]&f"
 # CoolTime(second)
 cooltime: 10
+# need money to send mail
 money: 1000
+# need money to export mail
+export_money: 1000
 enable:
