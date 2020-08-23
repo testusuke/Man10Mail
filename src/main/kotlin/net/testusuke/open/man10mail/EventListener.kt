@@ -58,9 +58,9 @@ object EventListener : Listener {
                         VaultManager.economy?.withdrawPlayer(player, plugin.MONEY_SEND_MAIL.toDouble())
                     }
                     //  Create
-                    val item = MailUtil.createExportedMail(result)
+                    val mailItem = MailUtil.createExportedMail(result)
                     //  Add
-                    player.inventory.addItem(item)
+                    player.inventory.addItem(mailItem)
                     //  Message
                     player.sendMessage("${prefix}§aメールを紙に出力しました。")
                 }).start()

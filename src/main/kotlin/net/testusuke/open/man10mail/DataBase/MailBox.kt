@@ -57,8 +57,10 @@ object MailBox {
         resultSet.close()
         statement.close()
 
-        //  OpenInventory
-        player.openInventory(inventory)
+        Bukkit.getScheduler().runTask(plugin, Runnable {
+            //  OpenInventory
+            player.openInventory(inventory)
+        })
     }
 
     fun showMail(player: Player, mailID: Int) {
