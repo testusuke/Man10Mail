@@ -13,6 +13,7 @@ import java.sql.Statement
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.util.*
+import kotlin.math.abs
 
 /**
  * Created by testusuke on 2020/07/04
@@ -277,6 +278,8 @@ object MailConsole {
         //  Logger
         plugin.logger.info("delete $amount mails. uuid:$uuid")
     }*/
+
+
     /**
      * function of remove old mail
      * @param uuid[String] uuid
@@ -296,24 +299,38 @@ object MailConsole {
         //  count
         val c = countResult.metaData.columnCount
         countResult.close()
-        if(c <= 54){
-            statement.close()
+        statement.close()
+
+        if(c <= 54) return
+
+        val mustRemoveAmount = c - 54
+
+        //  amount read mail
+        val readCountSql = "SELECT id FROM mail_list where to_player=? and `read`=true;"
+        val readCountStatement = connection.prepareStatement(readCountSql)
+        statement.setString(1,uuid)
+        val readCountResult = statement.executeQuery()
+        //  count
+        val readCount = countResult.metaData.columnCount
+        readCountResult.close()
+        readCountStatement.close()
+
+        val removeReadAmount = readCount - mustRemoveAmount
+        if(removeReadAmount >= 0){
+            val deleteReadSQL = "DELETE FROM mail_list WHERE to_player=? AND `read`='true' ORDER BY id asc LIMIT ${mustRemoveAmount};"
+            val removeReadStatement = connection.prepareStatement(deleteReadSQL)
+            removeReadStatement.setString(1,uuid)
+            removeReadStatement.close()
             return
         }
-
-        val mustRemoveValue = c - 54
-        //val deleteReadSQL = "DELETE FROM mail_list WHERE to_player='$uuid' AND read='true' ORDER BY id asc LIMIT $mustRemoveValue;"
-        val deleteReadSQL = "DELETE FROM mail_list WHERE to_player=? AND `read`='true' ORDER BY id asc LIMIT ?;"
+        val deleteReadSQL = "DELETE FROM mail_list WHERE to_player=? AND `read`='true';"
         val removeReadStatement = connection.prepareStatement(deleteReadSQL)
         removeReadStatement.setString(1,uuid)
-        removeReadStatement.setInt(2,mustRemoveValue)
-        val removedCount = removeReadStatement.executeUpdate()
         removeReadStatement.close()
 
-        mustRemoveValue - removedCount
-        if(mustRemoveValue <= 0) return
 
-        val selectSql = "SELECT id FROM mail_list where to_player=? ORDER BY id desc LIMIT 54,100;"
+        //  未読も消す
+        val selectSql = "SELECT id FROM mail_list where to_player=? ORDER BY id desc LIMIT 54,${abs(removeReadAmount)};"
         val selectStatement = connection.prepareStatement(selectSql)
         selectStatement.setString(1,uuid)
         val selectResult = selectStatement.executeQuery()
