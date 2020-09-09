@@ -294,46 +294,42 @@ object MailConsole {
         statement.setString(1,uuid)
         val countResult = statement.executeQuery()
         //  count
-        val c = plugin.dataBase.countColumn(countResult)
+        val c = countResult.metaData.columnCount
+        countResult.close()
         if(c <= 54){
-            countResult.close()
             statement.close()
             return
         }
-        var mustRemoveValue = c - 54
+
+        val mustRemoveValue = c - 54
         //val deleteReadSQL = "DELETE FROM mail_list WHERE to_player='$uuid' AND read='true' ORDER BY id asc LIMIT $mustRemoveValue;"
-        val deleteReadSQL = "DELETE FROM mail_list WHERE to_player=? AND read=? ORDER BY id asc LIMIT ?;"
+        val deleteReadSQL = "DELETE FROM mail_list WHERE to_player=? AND `read`='true' ORDER BY id asc LIMIT ?;"
         val removeReadStatement = connection.prepareStatement(deleteReadSQL)
         removeReadStatement.setString(1,uuid)
-        removeReadStatement.setBoolean(2,true)
-        removeReadStatement.setInt(3,mustRemoveValue)
+        removeReadStatement.setInt(2,mustRemoveValue)
         val removedCount = removeReadStatement.executeUpdate()
+        removeReadStatement.close()
 
         mustRemoveValue - removedCount
-        if(mustRemoveValue == 0){
-            removeReadStatement.close()
-            return
-        }
-        //  val sql = "SELECT id FROM mail_list where to_player='${uuid}' ORDER BY id asc LIMIT 54;"
-        val sql = "SELECT id FROM mail_list where to_player=? ORDER BY id asc LIMIT 54;"
-        val removeStatement = connection.prepareStatement(sql)
-        removeStatement.setString(1,uuid)
-        val result = removeStatement.executeQuery()
-        val deleteStatement = connection.createStatement()
-        while (result.next()){
-            val id = result.getInt("id")
+        if(mustRemoveValue <= 0) return
+
+        val selectSql = "SELECT id FROM mail_list where to_player=? ORDER BY id desc LIMIT 54,100;"
+        val selectStatement = connection.prepareStatement(selectSql)
+        selectStatement.setString(1,uuid)
+        val selectResult = selectStatement.executeQuery()
+        val removeStatement = connection.createStatement()
+        while (selectResult.next()){
+            val id = selectResult.getInt("id")
             val removeSql = "DELETE FROM mail_list WHERE id='${id}';"
-            deleteStatement.executeUpdate(removeSql)
+            removeStatement.executeUpdate(removeSql)
         }
-        result.close()
+        selectResult.close()
+        selectStatement.close()
         removeStatement.close()
-        deleteStatement.close()
-        removeReadStatement.close()
+
         countResult.close()
         statement.close()
 
-        //  Logger
-        plugin.logger.info("delete ${c-54} mails. uuid:$uuid")
     }
 
     /**
