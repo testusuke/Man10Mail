@@ -45,7 +45,7 @@ class Main : JavaPlugin() {
         //  instance
         plugin = this
         //  Config
-        this.saveDefaultConfig()
+        saveDefaultConfig()
         //  Command
         getCommand("mmail")?.setExecutor(MailCommand)
         //  Event
